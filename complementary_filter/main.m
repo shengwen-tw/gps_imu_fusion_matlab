@@ -29,14 +29,24 @@ barometer_height = csv(:, 17);
 barometer_vz = csv(:, 18);
 
 timestamp_s = timestamp_ms .* 0.001;
-data_num = size(timestamp_ms);
-attitude_estimator = attitude;
+[data_num, dummy] = size(timestamp_ms);
+
+ahrs = attitude;
 dt = 0.01; %100Hz, 0.01s
 
+roll = zeros(1, data_num);
+pitch = zeros(1, data_num);
+yaw = zeros(1, data_num);
+
 for i = 1: data_num
-    attitude_estimator.complementary_filter(accel_lpf_x(i), accel_lpf_y(i), accel_lpf_z(i), ...
-                                            gyro_raw_x(i), gyro_raw_y(i), gyro_raw_z(i), ...
-                                            mag_raw_x(i), mag_raw_y(i), mag_raw_z(i), dt);
+    ahrs = ...
+        ahrs.complementary_filter(-accel_lpf_x(i), -accel_lpf_y(i), -accel_lpf_z(i), ...
+                                  gyro_raw_x(i), gyro_raw_y(i), gyro_raw_z(i), ...
+                                  mag_raw_x(i), mag_raw_y(i), mag_raw_z(i), dt);
+    
+    roll(i) = ahrs.roll;
+    pitch(i) =ahrs.pitch;
+    yaw(i) = ahrs.yaw;                   
 end
 
 %%%%%%%%
@@ -62,16 +72,16 @@ ylabel('az [m/s^2]');
 %gyroscope
 figure('Name', 'gyroscope');
 subplot (3, 1, 1);
-plot(timestamp_s, gyro_raw_x);
+plot(timestamp_s, rad2deg(gyro_raw_x));
 title('gyroscope');
 xlabel('time [s]');
 ylabel('wx [rad/s]');
 subplot (3, 1, 2);
-plot(timestamp_s, gyro_raw_y);
+plot(timestamp_s, rad2deg(gyro_raw_y));
 xlabel('time [s]');
 ylabel('wy [rad/s]');
 subplot (3, 1, 3);
-plot(timestamp_s, gyro_raw_z);
+plot(timestamp_s, rad2deg(gyro_raw_z));
 xlabel('time [s]');
 ylabel('wz [rad/s]');
 
@@ -134,3 +144,23 @@ subplot (2, 1, 2);
 plot(timestamp_s, barometer_vz);
 xlabel('time [s]');
 ylabel('vz [m/s]');
+
+%estimated roll, pitch and yaw angle
+figure('Name', 'euler angles');
+subplot (3, 1, 1);
+plot(timestamp_s, roll);
+title('euler angles');
+xlabel('time [s]');
+ylabel('roll [deg]');
+subplot (3, 1, 2);
+plot(timestamp_s, pitch);
+xlabel('time [s]');
+ylabel('pitch [deg]');
+subplot (3, 1, 3);
+plot(timestamp_s, yaw);
+xlabel('time [s]');
+ylabel('yaw [deg]');
+
+disp("Press any key to leave");
+pause;
+close all;
