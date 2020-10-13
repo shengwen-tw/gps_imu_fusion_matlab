@@ -31,18 +31,36 @@ barometer_vz = csv(:, 18);
 timestamp_s = timestamp_ms .* 0.001;
 [data_num, dummy] = size(timestamp_ms);
 
-ahrs = attitude;
+%fusion period
 dt = 0.01; %100Hz, 0.01s
 
+ahrs = attitude;
+ins = position;
+
+%set home position
+home_longitude = 120.9971619;
+home_latitude = 24.7861614;
+ins = ins.set_home_longitude_latitude(home_longitude, home_latitude, 0);
+
+%record datas
 roll = zeros(1, data_num);
 pitch = zeros(1, data_num);
 yaw = zeros(1, data_num);
+gps_enu_x = zeros(1, data_num);
+gps_enu_y = zeros(1, data_num);
+gps_enu_z = zeros(1, data_num);
 
 for i = 1: data_num
     ahrs = ...
         ahrs.complementary_filter(-accel_lpf_x(i), -accel_lpf_y(i), -accel_lpf_z(i), ...
                                   gyro_raw_x(i), gyro_raw_y(i), gyro_raw_z(i), ...
                                   mag_raw_x(i), mag_raw_y(i), mag_raw_z(i), dt);
+    
+    position_enu = ins.convert_gps_ellipsoid_coordinates_to_enu(longitude(i), latitude(i), barometer_height(i));
+    
+    gps_enu_x(i) = position_enu(1);
+    gps_enu_y(i) = position_enu(2);
+    gps_enu_z(i) = position_enu(3);
     
     roll(i) = ahrs.roll;
     pitch(i) =ahrs.pitch;
@@ -160,6 +178,40 @@ subplot (3, 1, 3);
 plot(timestamp_s, yaw);
 xlabel('time [s]');
 ylabel('yaw [deg]');
+
+%position in enu frame
+figure('Name', 'position (enu frame)');
+subplot (3, 1, 1);
+plot(timestamp_s, gps_enu_x);
+title('position (enu frame)');
+xlabel('time [s]');
+ylabel('x [m]');
+subplot (3, 1, 2);
+plot(timestamp_s, gps_enu_y);
+xlabel('time [s]');
+ylabel('y [m]');
+subplot (3, 1, 3);
+plot(timestamp_s, barometer_height);
+xlabel('time [s]');
+ylabel('z [m]');
+
+%2d position trajectory plot of x-y plane
+figure('Name', 'x-y position (enu frame)');
+plot(gps_enu_x, -gps_enu_y);
+title('position (enu frame)');
+xlabel('x [m]');
+ylabel('y [m]');
+
+%3d visualization of position trajectory
+figure('Name', 'x-y-z position (enu frame)');
+plot3(gps_enu_x, gps_enu_y, barometer_height);
+title('position (enu frame)');
+xlabel('x [m]');
+ylabel('y [m]');
+zlabel('z [m]');
+daspect([1 1 1])
+grid on
+view(-10,20);
 
 disp("Press any key to leave");
 pause;
