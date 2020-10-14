@@ -6,8 +6,14 @@ classdef position
         home_ecef_y;
         home_ecef_z;
     end
-        
+    
     methods
+        function vec_enu = convert_3x1_vector_ned_to_enu(obj, vec_ned)
+            vec_enu(1) = vec_ned(2);
+            vec_enu(2) = vec_ned(1);
+            vec_enu(3) = -vec_ned(3);
+        end
+        
         function ret_obj = set_home_longitude_latitude(obj, longitude, latitude, height_msl)
             EARTH_RADIUS = 6371000;
             

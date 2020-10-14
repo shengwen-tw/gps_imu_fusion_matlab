@@ -3,6 +3,10 @@ classdef attitude
         q_last = [1; 0; 0; 0]
         q_estimate = [1; 0; 0; 0]
         
+        R = [1 0 0;
+             0 1 0;
+             0 0 1];
+        
         roll = 0
         pitch = 0
         yaw = 0
@@ -103,7 +107,34 @@ classdef attitude
                  r21 r22 r23;
                  r31 r32 r33];
         end
-        
+        function R = quat_to_rotation_matrix(obj, q)
+            q1q1 = q(2) * q(2);
+            q2q2 = q(3) * q(3);
+            q3q3 = q(4) * q(4);
+            q1q2 = q(2) * q(3);
+            q0q2 = q(1) * q(3);
+            q0q3 = q(1) * q(4);
+            q1q3 = q(2) * q(4);
+            q2q3 = q(3) * q(4);
+            q0q1 = q(1) * q(2);
+
+            r11 = 1.0 - 2.0 * (q2q2 + q3q3);
+            r12 = 2.0 * (q1q2 - q0q3);
+            r13 = 2.0 * (q0q2 + q1q3);
+
+            r21 = 2.0 * (q1q2 + q0q3);
+            r22 = 1.0 - 2.0 * (q1q1 + q3q3);
+            r23 = 2.0 * (q2q3 - q0q1);
+
+            r31 = 2.0 * (q1q3 - q0q2);
+            r32 = 2.0 * (q0q1 + q2q3);
+            r33 = 1.0 - 2.0 * (q1q1 + q2q2);
+            
+            R = [r11 r12 r13;
+                 r21 r22 r23;
+                 r31 r32 r33];
+        end
+
         function euler_angles = quat_to_euler(obj, q)
             roll = atan2(2.0*(q(1)*q(2) + q(3)*q(4)), 1.0-2.0*(q(2)*q(2) + q(3)*q(3)));
             pitch = asin(2.0*(q(1)*q(3) - q(4)*q(2)));
@@ -170,7 +201,9 @@ classdef attitude
             %us: quaternion of body-fixed frame to earth frame
             obj.q_estimate = obj.quaternion_conj(obj.q_estimate);            
             euler_angles = obj.quat_to_euler(obj.q_estimate);
-                        
+
+            obj.R = obj.quat_to_rotation_matrix(obj.q_estimate);
+            
             obj.roll = euler_angles(1);
             obj.pitch = euler_angles(2);
             obj.yaw = euler_angles(3);

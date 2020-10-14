@@ -46,9 +46,26 @@ ins = ins.set_home_longitude_latitude(home_longitude, home_latitude, 0);
 roll = zeros(1, data_num);
 pitch = zeros(1, data_num);
 yaw = zeros(1, data_num);
+%
 gps_enu_x = zeros(1, data_num);
 gps_enu_y = zeros(1, data_num);
 gps_enu_z = zeros(1, data_num);
+%visualization of b1, b2, b3 vectors with quiver3
+b1_visual_sample_cnt = 500;
+quiver_cnt = floor(data_num / b1_visual_sample_cnt);
+quiver_orig_x = zeros(1, quiver_cnt);
+quiver_orig_y = zeros(1, quiver_cnt);
+quiver_orig_z = zeros(1, quiver_cnt);
+quiver_b1_u = zeros(1, quiver_cnt);
+quiver_b1_v = zeros(1, quiver_cnt);
+quiver_b1_w = zeros(1, quiver_cnt);
+quiver_b2_u = zeros(1, quiver_cnt);
+quiver_b2_v = zeros(1, quiver_cnt);
+quiver_b2_w = zeros(1, quiver_cnt);
+quiver_b3_u = zeros(1, quiver_cnt);
+quiver_b3_v = zeros(1, quiver_cnt);
+quiver_b3_w = zeros(1, quiver_cnt);
+j = 1;
 
 for i = 1: data_num
     ahrs = ...
@@ -61,6 +78,23 @@ for i = 1: data_num
     gps_enu_x(i) = position_enu(1);
     gps_enu_y(i) = position_enu(2);
     gps_enu_z(i) = position_enu(3);
+    
+    
+    if mod(i, b1_visual_sample_cnt) == 0
+        quiver_orig_x(j) = position_enu(1);
+        quiver_orig_y(j) = position_enu(2);
+        quiver_orig_z(j) = position_enu(3);
+        quiver_b1_u(j) = ahrs.R(2, 1);
+        quiver_b1_v(j) = ahrs.R(1, 1);
+        quiver_b1_w(j) = -ahrs.R(3, 1);
+        quiver_b2_u(j) = ahrs.R(2, 2);
+        quiver_b2_v(j) = ahrs.R(1, 2);
+        quiver_b2_w(j) = -ahrs.R(3, 2);
+        quiver_b3_u(j) = ahrs.R(2, 3);
+        quiver_b3_v(j) = ahrs.R(1, 3);
+        quiver_b3_w(j) = -ahrs.R(3, 3);
+        j = j + 1;
+    end
     
     roll(i) = ahrs.roll;
     pitch(i) =ahrs.pitch;
@@ -204,7 +238,15 @@ ylabel('y [m]');
 
 %3d visualization of position trajectory
 figure('Name', 'x-y-z position (enu frame)');
-plot3(gps_enu_x, gps_enu_y, barometer_height);
+hold on;
+axis equal;
+plot3(gps_enu_x, gps_enu_y, barometer_height, 'Color', 'k');
+quiver3(quiver_orig_x,  quiver_orig_y,  quiver_orig_z, ...
+        quiver_b1_u,  quiver_b1_v,  quiver_b1_w, 'Color', 'r', 'AutoScaleFactor', 0.2);
+quiver3(quiver_orig_x,  quiver_orig_y,  quiver_orig_z, ...
+        quiver_b2_u,  quiver_b2_v,  quiver_b2_w, 'Color', 'g', 'AutoScaleFactor', 0.2);
+quiver3(quiver_orig_x,  quiver_orig_y,  quiver_orig_z, ...
+        quiver_b3_u,  quiver_b3_v,  quiver_b3_w, 'Color', 'b', 'AutoScaleFactor', 0.2);
 title('position (enu frame)');
 xlabel('x [m]');
 ylabel('y [m]');
