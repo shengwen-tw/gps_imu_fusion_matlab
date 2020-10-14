@@ -1,3 +1,4 @@
+format long g
 csv = csvread("gps_imu_compass_barometer_log1.csv");
 
 %ms
@@ -52,6 +53,15 @@ yaw = zeros(1, data_num);
 gps_enu_x = zeros(1, data_num);
 gps_enu_y = zeros(1, data_num);
 gps_enu_z = zeros(1, data_num);
+%
+fused_enu_x = zeros(1, data_num);
+fused_enu_y = zeros(1, data_num);
+fused_enu_z = zeros(1, data_num);
+%
+fused_enu_vx = zeros(1, data_num);
+fused_enu_vy = zeros(1, data_num);
+fused_eny_vz = zeros(1, data_num);
+%
 %visualization of b1, b2, b3 vectors with quiver3
 b1_visual_sample_cnt = 500;
 quiver_cnt = floor(data_num / b1_visual_sample_cnt);
@@ -69,19 +79,45 @@ quiver_b3_v = zeros(1, quiver_cnt);
 quiver_b3_w = zeros(1, quiver_cnt);
 j = 1;
 
-for i = 1: data_num
+%ins state initialization
+ins = ins.filter_state_init(longitude(1), latitude(1), barometer_height(1), ...
+                            gps_ned_vx(1), gps_ned_vy(1), barometer_vz(1));
+
+for i = 2: data_num
+    %attitude estimation
     ahrs = ...
         ahrs.complementary_filter(-accel_lpf_x(i), -accel_lpf_y(i), -accel_lpf_z(i), ...
                                   gyro_raw_x(i), gyro_raw_y(i), gyro_raw_z(i), ...
                                   mag_raw_x(i), mag_raw_y(i), mag_raw_z(i), dt);
     
-    position_enu = ins.convert_gps_ellipsoid_coordinates_to_enu(longitude(i), latitude(i), barometer_height(i));
+    %position and velocity estimation
+    ins = ins.state_predict(ahrs.R, ...
+                            accel_lpf_x(i), accel_lpf_y(i), accel_lpf_z(i), ...
+                            dt);
+
+    %update z directional state from barometer
+    ins = ins.barometer_update(barometer_height(i), barometer_vz(i));
     
+    %update x-y directional state from gps if new gps data is obtained
+    if (abs(gps_ned_vx(i) - gps_ned_vx(i - 1)) > 1e-4 && abs(gps_ned_vy(i) - gps_ned_vy(i - 1)) > 1e-4)
+        ins = ins.gps_update(longitude(i), latitude(i), gps_ned_vx(i), gps_ned_vy(i));
+    end
+    
+    fused_enu_x(i) =  ins.fused_enu_x;
+    fused_enu_y(i) = ins.fused_enu_y;
+    fused_enu_z(i) = ins.fused_enu_z;
+    fused_enu_vx(i) = ins.fused_enu_vx;
+    fused_enu_vy(i) = ins.fused_enu_vy;
+    fused_enu_vz(i) = ins.fused_enu_vz;
+
+    %gps, barometer raw signal and transform it into enu frame for
+    %visualization
+    position_enu = ins.convert_gps_ellipsoid_coordinates_to_enu(longitude(i), latitude(i), barometer_height(i));
     gps_enu_x(i) = position_enu(1);
     gps_enu_y(i) = position_enu(2);
     gps_enu_z(i) = position_enu(3);
     
-    
+    %collect rotation vectors for visualization
     if mod(i, b1_visual_sample_cnt) == 0
         quiver_orig_x(j) = position_enu(1);
         quiver_orig_y(j) = position_enu(2);
@@ -231,6 +267,22 @@ plot(timestamp_s, barometer_height);
 xlabel('time [s]');
 ylabel('z [m]');
 
+%fused velocity in enu frame
+figure('Name', 'fused velocity (enu frame)');
+subplot (3, 1, 1);
+plot(timestamp_s, fused_enu_vx);
+title('fused velocity (enu frame)');
+xlabel('time [s]');
+ylabel('vx [m/s]');
+subplot (3, 1, 2);
+plot(timestamp_s, fused_enu_vy);
+xlabel('time [s]');
+ylabel('vy [m/s]');
+subplot (3, 1, 3);
+plot(timestamp_s, fused_enu_vz);
+xlabel('time [s]');
+ylabel('vz [m/s]');
+
 %2d position trajectory plot of x-y plane
 figure('Name', 'x-y position (enu frame)');
 plot(gps_enu_x, -gps_enu_y);
@@ -243,13 +295,15 @@ figure('Name', 'x-y-z position (enu frame)');
 hold on;
 axis equal;
 plot3(gps_enu_x, gps_enu_y, barometer_height, 'Color', 'k');
+plot3(fused_enu_x, fused_enu_y, fused_enu_z, 'Color', 'r');
 quiver3(quiver_orig_x,  quiver_orig_y,  quiver_orig_z, ...
         quiver_b1_u,  quiver_b1_v,  quiver_b1_w, 'Color', 'r', 'AutoScaleFactor', 0.2);
 quiver3(quiver_orig_x,  quiver_orig_y,  quiver_orig_z, ...
         quiver_b2_u,  quiver_b2_v,  quiver_b2_w, 'Color', 'g', 'AutoScaleFactor', 0.2);
 quiver3(quiver_orig_x,  quiver_orig_y,  quiver_orig_z, ...
         quiver_b3_u,  quiver_b3_v,  quiver_b3_w, 'Color', 'b', 'AutoScaleFactor', 0.2);
-legend('gps trajectory', 'b1 vector', 'b2 vector', 'b3 vector') 
+%legend('gps trajectory', 'b1 vector', 'b2 vector', 'b3 vector') 
+legend('gps trajectory', 'fused trajectory', 'b1 vector', 'b2 vector', 'b3 vector') 
 title('position (enu frame)');
 xlabel('x [m]');
 ylabel('y [m]');
