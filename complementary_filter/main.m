@@ -83,12 +83,21 @@ j = 1;
 ins = ins.filter_state_init(longitude(1), latitude(1), barometer_height(1), ...
                             gps_ned_vx(1), gps_ned_vy(1), barometer_vz(1));
 
+vel_ned_body = [0; 0; 0];
+                        
 for i = 2: data_num
     dt = timestamp_s(i) - timestamp_s(i - 1);
     
+    %eliminate body-fixed frame acceleration induced by rotation for
+    %getting better gravity vector
+    accel_translational = cross([gyro_raw_x(i); gyro_raw_y(i); gyro_raw_z(i)], vel_ned_body);
+    gravity = [-accel_lpf_x(i) - accel_translational(1);
+               -accel_lpf_y(i) - accel_translational(2);
+               -accel_lpf_z(i) - accel_translational(3);];
+    
     %attitude estimation
     ahrs = ...
-        ahrs.complementary_filter(-accel_lpf_x(i), -accel_lpf_y(i), -accel_lpf_z(i), ...
+        ahrs.complementary_filter(gravity(1), gravity(2), gravity(3), ...
                                   gyro_raw_x(i), gyro_raw_y(i), gyro_raw_z(i), ...
                                   mag_raw_x(i), mag_raw_y(i), mag_raw_z(i), dt);
     
@@ -104,6 +113,8 @@ for i = 2: data_num
     if (abs(gps_ned_vx(i) - gps_ned_vx(i - 1)) > 1e-4 && abs(gps_ned_vy(i) - gps_ned_vy(i - 1)) > 1e-4)
         ins = ins.gps_update(longitude(i), latitude(i), gps_ned_vx(i), gps_ned_vy(i));
     end
+    
+    vel_ned_body = ahrs.R * [ins.fused_enu_vy; ins.fused_enu_vx; -ins.fused_enu_vz];
     
     fused_enu_x(i) =  ins.fused_enu_x;
     fused_enu_y(i) = ins.fused_enu_y;
