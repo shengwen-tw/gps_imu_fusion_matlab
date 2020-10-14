@@ -247,6 +247,7 @@ quiver3(quiver_orig_x,  quiver_orig_y,  quiver_orig_z, ...
         quiver_b2_u,  quiver_b2_v,  quiver_b2_w, 'Color', 'g', 'AutoScaleFactor', 0.2);
 quiver3(quiver_orig_x,  quiver_orig_y,  quiver_orig_z, ...
         quiver_b3_u,  quiver_b3_v,  quiver_b3_w, 'Color', 'b', 'AutoScaleFactor', 0.2);
+legend('gps trajectory', 'b1 vector', 'b2 vector', 'b3 vector') 
 title('position (enu frame)');
 xlabel('x [m]');
 ylabel('y [m]');
