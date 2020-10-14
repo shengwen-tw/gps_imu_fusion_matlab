@@ -35,8 +35,8 @@ timestamp_s = timestamp_ms .* 0.001;
 %fusion period
 dt = 0.01; %100Hz, 0.01s
 
-ahrs = attitude;
-ins = position;
+ahrs = attitude_estimator;
+ins = position_estimator;
 
 %set home position
 home_longitude = 120.9971619;
@@ -84,6 +84,8 @@ ins = ins.filter_state_init(longitude(1), latitude(1), barometer_height(1), ...
                             gps_ned_vx(1), gps_ned_vy(1), barometer_vz(1));
 
 for i = 2: data_num
+    dt = timestamp_s(i) - timestamp_s(i - 1);
+    
     %attitude estimation
     ahrs = ...
         ahrs.complementary_filter(-accel_lpf_x(i), -accel_lpf_y(i), -accel_lpf_z(i), ...
@@ -269,23 +271,41 @@ ylabel('z [m]');
 
 %fused velocity in enu frame
 figure('Name', 'fused velocity (enu frame)');
+grid on;
 subplot (3, 1, 1);
+hold on;
 plot(timestamp_s, fused_enu_vx);
+plot(timestamp_s, gps_ned_vy);
 title('fused velocity (enu frame)');
+legend('fused velocity', 'gps velocity') ;
 xlabel('time [s]');
 ylabel('vx [m/s]');
 subplot (3, 1, 2);
+hold on;
 plot(timestamp_s, fused_enu_vy);
+plot(timestamp_s, gps_ned_vx);
 xlabel('time [s]');
 ylabel('vy [m/s]');
+legend('fused velocity', 'gps velocity') ;
 subplot (3, 1, 3);
+hold on;
+plot(timestamp_s, barometer_vz);
 plot(timestamp_s, fused_enu_vz);
+legend('fused velocity', 'barometer velocity') ;
 xlabel('time [s]');
 ylabel('vz [m/s]');
 
 %2d position trajectory plot of x-y plane
 figure('Name', 'x-y position (enu frame)');
-plot(gps_enu_x, -gps_enu_y);
+grid on;
+hold on;
+plot(gps_enu_x, gps_enu_y, ...
+     'Color', 'k', ...
+     'Marker', 'o', ...
+     'LineStyle', 'None', ...
+     'MarkerSize', 3);
+plot(fused_enu_x, fused_enu_y, 'Color', 'r');
+legend('gps trajectory', 'fused trajectory') ;
 title('position (enu frame)');
 xlabel('x [m]');
 ylabel('y [m]');
@@ -294,8 +314,12 @@ ylabel('y [m]');
 figure('Name', 'x-y-z position (enu frame)');
 hold on;
 axis equal;
-plot3(gps_enu_x, gps_enu_y, barometer_height, 'Color', 'k');
-plot3(fused_enu_x, fused_enu_y, fused_enu_z, 'Color', 'r');
+plot3(gps_enu_x, gps_enu_y, barometer_height, ...
+      'Color', 'k', ...
+      'Marker', 'o', ...
+      'LineStyle', 'None', ...
+      'MarkerSize', 2);
+plot3(fused_enu_x, fused_enu_y, fused_enu_z, 'Color', 'm');
 quiver3(quiver_orig_x,  quiver_orig_y,  quiver_orig_z, ...
         quiver_b1_u,  quiver_b1_v,  quiver_b1_w, 'Color', 'r', 'AutoScaleFactor', 0.2);
 quiver3(quiver_orig_x,  quiver_orig_y,  quiver_orig_z, ...

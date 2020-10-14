@@ -1,4 +1,4 @@
-classdef attitude
+classdef attitude_estimator
     properties
         inclination_angle = 0;
         q_inclination = [1; 0; 0; 0];

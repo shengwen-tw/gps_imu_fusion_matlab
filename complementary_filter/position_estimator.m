@@ -1,4 +1,4 @@
-classdef position
+classdef position_estimator
     properties
         home_longitude = 0;
         home_latitude = 0;
@@ -115,23 +115,23 @@ classdef position
             position_enu_y = position_enu(2);
             
             %velocity complementary filter
-            weight_gps_vel = 0.4;
+            weight_gps_vel = 0.2;
             obj.fused_enu_vx = (1 - weight_gps_vel) * obj.fused_enu_vx + weight_gps_vel * velocity_enu_x;
-            obj.fused_enu_vy = (1 - weight_gps_vel) * obj.fused_enu_vx + weight_gps_vel * velocity_enu_y;
+            obj.fused_enu_vy = (1 - weight_gps_vel) * obj.fused_enu_vy + weight_gps_vel * velocity_enu_y;
             
             %position complementary filter
-            weight_gps_pos = 0.995;
+            weight_gps_pos = 0.5;
             obj.fused_enu_x = (1 - weight_gps_pos) * obj.fused_enu_x + weight_gps_pos * position_enu_x;
-            obj.fused_enu_y = (1 - weight_gps_pos) * obj.fused_enu_x + weight_gps_pos * position_enu_y;
+            obj.fused_enu_y = (1 - weight_gps_pos) * obj.fused_enu_y + weight_gps_pos * position_enu_y;
             
             ret_obj = obj;
         end
         
         function ret_obj = barometer_update(obj, height_ref, vz_ref)
-            weight_barometer_vel = 0.005;
+            weight_barometer_vel = 0.01;
             obj.fused_enu_vz = (1 - weight_barometer_vel) * obj.fused_enu_vz + weight_barometer_vel * vz_ref;
             
-            weight_barometer_height = 0.005;
+            weight_barometer_height = 0.01;
             obj.fused_enu_z = (1 - weight_barometer_height) * obj.fused_enu_z + weight_barometer_height * height_ref;
             
             ret_obj = obj;
