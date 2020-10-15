@@ -78,6 +78,13 @@ quiver_b3_u = zeros(1, quiver_cnt);
 quiver_b3_v = zeros(1, quiver_cnt);
 quiver_b3_w = zeros(1, quiver_cnt);
 j = 1;
+%corrected gravity vector
+gravity_x_arr = zeros(1, data_num);
+gravity_y_arr = zeros(1, data_num);
+gravity_z_arr = zeros(1, data_num);
+gravity_x_arr(1) = accel_lpf_x(1);
+gravity_y_arr(1) = accel_lpf_y(2);
+gravity_z_arr(1) = -accel_lpf_z(3);
 
 %ins state initialization
 ins = ins.filter_state_init(longitude(1), latitude(1), barometer_height(1), ...
@@ -94,6 +101,10 @@ for i = 2: data_num
     gravity = [-accel_lpf_x(i) - accel_translational(1);
                -accel_lpf_y(i) - accel_translational(2);
                -accel_lpf_z(i) - accel_translational(3);];
+    
+    gravity_x_arr(i) = gravity(1);
+    gravity_y_arr(i) = gravity(2);
+    gravity_z_arr(i) = gravity(3);
     
     %attitude estimation
     ahrs = ...
@@ -305,6 +316,31 @@ plot(timestamp_s, fused_enu_vz);
 legend('fused velocity', 'barometer velocity') ;
 xlabel('time [s]');
 ylabel('vz [m/s]');
+
+%accelerometer vs corrected gravity
+figure('Name', 'gravity');
+subplot (3, 1, 1);
+hold on;
+plot(timestamp_s, gravity_x_arr);
+plot(timestamp_s, accel_lpf_x);
+title('gravity');
+xlabel('time [s]');
+ylabel('ax [m/s^2]');
+legend('measured', 'corrected');
+subplot (3, 1, 2);
+hold on;
+plot(timestamp_s, gravity_y_arr);
+plot(timestamp_s, accel_lpf_y);
+xlabel('time [s]');
+ylabel('ay [m/s^2]');
+legend('measured', 'corrected');
+subplot (3, 1, 3);
+hold on;
+plot(timestamp_s, gravity_z_arr);
+plot(timestamp_s, -accel_lpf_z);
+xlabel('time [s]');
+ylabel('az [m/s^2]');
+legend('measured', 'corrected');
 
 %2d position trajectory plot of x-y plane
 figure('Name', 'x-y position (enu frame)');
