@@ -85,6 +85,9 @@ gravity_z_arr = zeros(1, data_num);
 gravity_x_arr(1) = accel_lpf_x(1);
 gravity_y_arr(1) = accel_lpf_y(2);
 gravity_z_arr(1) = -accel_lpf_z(3);
+%accelerometer norm and corrected norm
+accelerometer_norm_arr = zeros(1, data_num);
+gravity_norm_arr = zeros(1, data_num);
 
 %ins state initialization
 ins = ins.filter_state_init(longitude(1), latitude(1), barometer_height(1), ...
@@ -157,6 +160,13 @@ for i = 2: data_num
         quiver_b3_w(j) = -ahrs.R(3, 3);
         j = j + 1;
     end
+    
+    accelerometer_norm_arr(i) = sqrt(accel_lpf_x(i) * accel_lpf_x(i) + ...
+                                     accel_lpf_y(i) * accel_lpf_y(i) + ...
+                                     accel_lpf_z(i) * accel_lpf_z(i));
+    gravity_norm_arr(i) = sqrt(gravity(1) * gravity(1) + ...
+                               gravity(2) * gravity(2) + ...
+                               gravity(3) * gravity(3));
     
     roll(i) = ahrs.roll;
     pitch(i) =ahrs.pitch;
@@ -340,6 +350,16 @@ plot(timestamp_s, gravity_z_arr);
 plot(timestamp_s, -accel_lpf_z);
 xlabel('time [s]');
 ylabel('az [m/s^2]');
+legend('measured', 'corrected');
+
+%accelerometer norm vs corrected gravity norm
+figure('Name', 'gravity norm');
+hold on;
+plot(timestamp_s(2: data_num), accelerometer_norm_arr(2: data_num));
+plot(timestamp_s(2: data_num), gravity_norm_arr(2: data_num));
+title('gravity norm');
+xlabel('time [s]');
+ylabel('ax (m/s^2]');
 legend('measured', 'corrected');
 
 %2d position trajectory plot of x-y plane
