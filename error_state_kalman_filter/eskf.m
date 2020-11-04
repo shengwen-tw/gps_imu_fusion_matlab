@@ -32,7 +32,6 @@ classdef eskf
         
         %covariance matrices
         P = eye(16);
-        F_i;
         Q_i = eye(16);
     end
     
@@ -80,11 +79,30 @@ classdef eskf
             obj.delta_p = obj.delta_p + (obj.delta_v * obj.dt);
             
             %update delta_v
-            obj.delta_v = obj.delta_v + (-R*hat_map_3x3(am - obj.ab)*obj.delta_theta - R*obj.delta_ab) * obj.dt;
+            obj.delta_v = obj.delta_v + (-hat_map_3x3(obj.R * (am - obj.ab))*obj.delta_theta - obj.R*obj.delta_ab) * obj.dt;
             
             %update delta_theta
             obj.theta = (obj.Rt * ((obj.wm - obj.wb) * obj.dt) * obj.delta_theta) - ...
                 (obj.delta_wb * obj.dt);
+            
+            %calculate state transition matrix F_x
+            F_x = zeros(15, 15);
+            F_x(1:3, 1:3) = eye(3);
+            F_x(1:3, 4:6) = obj.dt * eye(3);
+            F_x(4:6, 4:6) = eye(3);
+            F_x(4:6, 7:9) = -hat_map_3x3(obj.R * (am - obj.ab)) * obj.dt;
+            F_x(4:6, 10:12) = -obj.R * obj.dt;
+            F_x(7:9, 7:9) = eye(3);
+            F_x(7:9, 13:15) = -obj.R * obj.dt;
+            F_x(10:12, 10:12) = eye(3);
+            F_x(13:15, 13:15) = eye(3);
+            
+            %calculate state transition matrix F_i
+            F_i = zeros(15, 12);
+            F_i(4:6, 4:6) = eye(3);
+            F_i(7:9, 7:9) = eye(3);
+            F_i(10:12, 10:12) = eye(3);
+            F_i(13:15, 13:15) = eye(3);
             
             %update error state covariance matrix P
         end
@@ -92,6 +110,24 @@ classdef eskf
         function eskf_update(obj, accelerometer)
             obj.nominal_state_update(accelerometer)
             obj.error_state_update(accelerometer)
+        end
+        
+        function error_state_correct(obj)
+            qw = obj.q(1);
+            qx = obj.q(2);
+            qy = obj.q(3);
+            qz = obj.q(4);
+            
+            Q_delta_theta = (1 / 2) * ...
+            [-qx -qy -qz;
+             +qw -qz +qy;
+             +qz +qw -qx;
+             -qy +qx +qw];
+            
+            X_delta_x = zeros(16, 16);
+            X_delta_x(1:3, 1:3) = eye(3);
+            X_delta_x(4:7, 4:7) = Q_delta_theta;
+            X_delta_x(8:13, 8:13) = eye(6);
         end
         
         function nominal_state_injection(obj)
