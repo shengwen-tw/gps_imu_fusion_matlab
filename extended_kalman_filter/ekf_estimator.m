@@ -167,7 +167,7 @@ classdef ekf_estimator
             ret_obj = obj;
         end
         
-        function ret_obj = correct(obj, gx, gy, gz)
+        function ret_obj = accel_correct(obj, gx, gy, gz)
             %normalize gravity vector
             gravity = [gx; gy; gz];
             gravity = gravity / norm(gravity);
@@ -202,6 +202,66 @@ classdef ekf_estimator
             obj.x_a_posterior = obj.x_a_priori + epsilon_accel;
             obj.x_a_posterior = obj.quat_normalize(obj.x_a_posterior);
             obj.P = (obj.I_4x4 - K_accel*H_accel) * obj.P;
+            %disp(obj.P);
+            
+            obj.x_last = obj.x_a_posterior;
+            
+            %return the conjugated quaternion since we use the opposite convention compared to the paper
+            %paper: quaternion of earth frame to body-fixed frame
+            %us: quaternion of body-fixed frame to earth frame
+            obj.x_a_posterior = obj.quaternion_conj(obj.x_a_posterior);
+            obj.x_a_posterior = obj.quaternion_mult(obj.q_inclination, obj.x_a_posterior);
+
+            %x_a_posterior becomes the x_a_priori of the magnetometer's correction
+            obj.x_a_priori = obj.x_a_posterior;
+            
+            %update rotation matrix for position estimation
+            obj.R = obj.quat_to_rotation_matrix(obj.x_a_posterior);
+            
+            %update euler angles for visualization
+            euler_angles = obj.quat_to_euler(obj.x_a_posterior);
+            obj.roll = euler_angles(1);
+            obj.pitch = euler_angles(2);
+            obj.yaw = euler_angles(3);
+            
+            ret_obj = obj;
+        end
+        
+        function ret_obj = mag_correct(obj, mx, my, mz)
+            %normalize gravity vector
+            mag = [mx; my; mz];
+            mag = mag / norm(mag);
+            
+            q0 = obj.x_a_priori(1);
+            q1 = obj.x_a_priori(2);
+            q2 = obj.x_a_priori(3);
+            q3 = obj.x_a_priori(4);
+            
+            %correction: acceleromater
+            H_mag = [ 2*q0  2*q1  -2*q2  -2*q3;
+                     -2*q3  2*q2   2*q1  -2*q0;
+                      2*q2  2*q3   2*q0   2*q1];
+            
+            %calculate kalman gain
+            H_mag_t = H_mag.';
+            PHt_mag = obj.P * H_mag_t;
+            K_mag = PHt_mag * inv(H_mag * PHt_mag + obj.R_mag);
+            %disp(K_mag);
+            
+            %prediction of gravity vector using gyroscope
+            h_mag = [q0*q0 + q1*q1 - q2*q2 - q3*q3;
+                     2 * (q1*q2 - q0*q3);
+                     2 * (q0*q2 + q1*q3)];
+                   
+            %residual
+            epsilon_mag = K_mag * (mag - h_mag);
+            epsilon_mag(2) = 0;
+            epsilon_mag(3) = 0;
+            
+            %a posterior estimation
+            obj.x_a_posterior = obj.x_a_priori + epsilon_mag;
+            obj.x_a_posterior = obj.quat_normalize(obj.x_a_posterior);
+            obj.P = (obj.I_4x4 - K_mag*H_mag) * obj.P;
             %disp(obj.P);
             
             obj.x_last = obj.x_a_posterior;
