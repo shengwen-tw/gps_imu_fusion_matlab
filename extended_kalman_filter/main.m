@@ -42,6 +42,7 @@ home_longitude = 120.9971619;
 home_latitude = 24.7861614;
 inclination_angle = -23.5;
 ekf = ekf.set_inclination_angle(inclination_angle);
+ekf = ekf.set_home_longitude_latitude(home_longitude, home_latitude, 0);
 
 %record datas
 roll = zeros(1, data_num);
@@ -109,10 +110,15 @@ for i = 2: data_num
     ekf = ...
         ekf.mag_correct(mag_raw_x(i), mag_raw_y(i), mag_raw_z(i));
     
+    %gps, barometer raw signal and transform it into enu frame for
+    %visualization
+    position_enu = ekf.convert_gps_ellipsoid_coordinates_to_enu(longitude(i), latitude(i), barometer_height(i));
+    gps_enu_x(i) = position_enu(1);
+    gps_enu_y(i) = position_enu(2);
+    gps_enu_z(i) = position_enu(3);
+    
     q = ekf.get_quaternion();
-    
     euler_angles = ekf.quat_to_euler(q);
-    
     roll(i) = euler_angles(1);
     pitch(i) = euler_angles(2);
     yaw(i) = euler_angles(3);
@@ -185,6 +191,50 @@ subplot (3, 1, 3);
 plot(timestamp_s, yaw);
 xlabel('time [s]');
 ylabel('yaw [deg]');
+
+%2d position trajectory plot of x-y plane
+figure('Name', 'x-y position (enu frame)');
+grid on;
+hold on;
+plot(gps_enu_x, gps_enu_y, ...
+     'Color', 'k', ...
+     'Marker', 'o', ...
+     'LineStyle', 'None', ...
+     'MarkerSize', 3);
+%plot(fused_enu_x, fused_enu_y, 'Color', 'r');
+%legend('gps trajectory', 'fused trajectory') ;
+legend('gps trajectory');
+title('position (enu frame)');
+xlabel('x [m]');
+ylabel('y [m]');
+
+%3d visualization of position trajectory
+figure('Name', 'x-y-z position (enu frame)');
+hold on;
+axis equal;
+plot3(gps_enu_x, gps_enu_y, barometer_height, ...
+      'Color', 'k', ...
+      'Marker', 'o', ...
+      'LineStyle', 'None', ...
+      'MarkerSize', 2);
+%plot3(fused_enu_x, fused_enu_y, fused_enu_z, 'Color', 'm');
+%quiver3(quiver_orig_x,  quiver_orig_y,  quiver_orig_z, ...
+%        quiver_b1_u,  quiver_b1_v,  quiver_b1_w, 'Color', 'r', 'AutoScaleFactor', 0.2);
+%quiver3(quiver_orig_x,  quiver_orig_y,  quiver_orig_z, ...
+%        quiver_b2_u,  quiver_b2_v,  quiver_b2_w, 'Color', 'g', 'AutoScaleFactor', 0.2);
+%quiver3(quiver_orig_x,  quiver_orig_y,  quiver_orig_z, ...
+%        quiver_b3_u,  quiver_b3_v,  quiver_b3_w, 'Color', 'b', 'AutoScaleFactor', 0.2);
+legend('gps trajectory');
+%legend('gps trajectory', 'b1 vector', 'b2 vector', 'b3 vector') 
+%legend('gps trajectory', 'fused trajectory', 'b1 vector', 'b2 vector', 'b3 vector') 
+title('position (enu frame)');
+xlabel('x [m]');
+ylabel('y [m]');
+zlabel('z [m]');
+daspect([1 1 1])
+grid on
+view(-10,20);
+
 
 disp("Press any key to leave");
 pause;
