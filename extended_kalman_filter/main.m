@@ -107,8 +107,8 @@ for i = 2: data_num
     ekf = ...
         ekf.accel_correct(gravity(1), gravity(2), gravity(3));
     
-    %ekf = ...
-    %    ekf.mag_correct(mag_raw_x(i), mag_raw_y(i), mag_raw_z(i));
+    ekf = ...
+        ekf.mag_correct(mag_raw_x(i), mag_raw_y(i), mag_raw_z(i));
     
     roll(i) = ekf.roll;
     pitch(i) = ekf.pitch;

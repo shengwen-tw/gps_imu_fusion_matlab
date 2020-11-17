@@ -12,10 +12,10 @@ classdef ekf_estimator
         x_a_posterior = [1; 0; 0; 0]
         
         %process covariance matrix
-        P = [2 0 0 0;
-             0 2 0 0;
-             0 0 2 0;
-             0 0 0 2];
+        P = [5 0 0 0;
+             0 5 0 0;
+             0 0 5 0;
+             0 0 0 5];
         
         %prediction covariance matrix
         Q = [1e-6     0     0     0;
@@ -29,9 +29,9 @@ classdef ekf_estimator
                    0 0 1];
         
         %observation covariance matrix of magnetometer
-        R_mag = [0.01     0     0;
-                 0     0.01     0;
-                 0        0  0.01];
+        R_mag = [10     0     0;
+                 0     10     0;
+                 0        0  10];
 
         %rotation matrix of current attitude
         R = [1 0 0;
@@ -196,7 +196,6 @@ classdef ekf_estimator
             %residual
             epsilon_accel = K_accel * (gravity - h_accel);
             epsilon_accel(4) = 0;
-            %epsilon_accel = obj.quat_normalize(epsilon_accel);
             
             %a posterior estimation
             obj.x_a_posterior = obj.x_a_priori + epsilon_accel;
@@ -206,14 +205,13 @@ classdef ekf_estimator
             
             obj.x_last = obj.x_a_posterior;
             
+            %x_a_posterior becomes the x_a_priori of the magnetometer's correction
+            obj.x_a_priori = obj.x_a_posterior;
+            
             %return the conjugated quaternion since we use the opposite convention compared to the paper
             %paper: quaternion of earth frame to body-fixed frame
             %us: quaternion of body-fixed frame to earth frame
             obj.x_a_posterior = obj.quaternion_conj(obj.x_a_posterior);
-            obj.x_a_posterior = obj.quaternion_mult(obj.q_inclination, obj.x_a_posterior);
-
-            %x_a_posterior becomes the x_a_priori of the magnetometer's correction
-            obj.x_a_priori = obj.x_a_posterior;
             
             %update rotation matrix for position estimation
             obj.R = obj.quat_to_rotation_matrix(obj.x_a_posterior);
@@ -270,7 +268,7 @@ classdef ekf_estimator
             %paper: quaternion of earth frame to body-fixed frame
             %us: quaternion of body-fixed frame to earth frame
             obj.x_a_posterior = obj.quaternion_conj(obj.x_a_posterior);
-            obj.x_a_posterior = obj.quaternion_mult(obj.q_inclination, obj.x_a_posterior);
+            %obj.x_a_posterior = obj.quaternion_mult(obj.q_inclination, obj.x_a_posterior);
 
             %update rotation matrix for position estimation
             obj.R = obj.quat_to_rotation_matrix(obj.x_a_posterior);
