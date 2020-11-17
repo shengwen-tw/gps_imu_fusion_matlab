@@ -3,16 +3,47 @@ classdef ekf_estimator
         inclination_angle = 0;
         q_inclination = [1; 0; 0; 0];
         
-        q_last = [1; 0; 0; 0]
-        q_estimate = [1; 0; 0; 0]
+        %save for last optimal estimation
+        x_last = [1; 0; 0; 0]
         
+        %prediction a priori state
+        x_a_priori = [1; 0; 0; 0]
+        %corrected a posterior state
+        x_a_posterior = [1; 0; 0; 0]
+        
+        %process covariance matrix
+        P = [10 0 0 0;
+             0 10 0 0;
+             0 0 10 0;
+             0 0 0 10];
+        
+        %prediction covariance matrix
+        Q = [0.1 0 0 0;
+             0 0.1 0 0;
+             0 0 0.1 0;
+             0 0 0 0.1];
+         
+       %observation covariance matrix of acceleromter
+        R_accel = [5 0 0
+                   0 5 0;
+                   0 0 5];
+        
+        %observation covariance matrix of magnetometer
+        R_mag = [1 0 0;
+                 0 1 0;
+                 0 0 1];
+
+        %rotation matrix of current attitude
         R = [1 0 0;
              0 1 0;
              0 0 1];
         
+        %euler angles
         roll = 0
         pitch = 0
         yaw = 0
+        
+        I_4x4 = eye(4);
     end
         
     methods
@@ -36,50 +67,6 @@ classdef ekf_estimator
                      q(2) * div_q_norm;
                      q(3) * div_q_norm;
                      q(4) * div_q_norm];
-        end
-        
-        function q_out = lerp(obj, q1, q2, alpha)
-            q_out = [(1.0 - alpha) * q1(1) + (alpha * q2(1));
-                     (1.0 - alpha) * q1(2) + (alpha * q2(2));
-                     (1.0 - alpha) * q1(3) + (alpha * q2(3));
-                     (1.0 - alpha) * q1(4) + (alpha * q2(4))];
-        end
-        
-        function q = convert_gravity_to_quat(obj, a)
-            if a(3) >= 0.0
-                sqrt_tmp = 1.0 / sqrt(2.0 * (a(3) + 1));
-                q(1) = sqrt(0.5 * (a(3) + 1.0));
-                q(2) = -a(2) * sqrt_tmp;
-                q(3) = +a(1) * sqrt_tmp;
-                q(4) = 0.0;
-            else
-                sqrt_tmp = 1.0 / sqrt(2.0 * (1.0 - a(3)));
-                q(1) = -a(2) * sqrt_tmp;
-                q(2) = sqrt((1.0 - a(3)) * 0.5);
-                q(3) = 0.0;
-                q(4) = a(1) * sqrt_tmp;
-            end
-        end
-        
-        function q = convert_magnetic_field_to_quat(obj, l)
-            gamma = l(1)*l(1) + l(2)*l(2);
-            sqrt_gamma = sqrt(gamma);
-            sqrt_2gamma = sqrt(2.0 * gamma);
-            sqrt_2 = sqrt(2.0);
-
-            if l(1) >= 0.0
-                sqrt_tmp = sqrt(gamma + l(1)*sqrt_gamma);
-                q(1)= sqrt_tmp / sqrt_2gamma;
-                q(2) = 0.0;
-                q(3) = 0.0;
-                q(4) = l(2) / (sqrt_2 * sqrt_tmp);
-            else
-                sqrt_tmp = sqrt(gamma - l(1)*sqrt_gamma);
-                q(1) = l(2) / (sqrt_2 * sqrt_tmp);
-                q(2) = 0.0;
-                q(3) = 0.0;
-                q(4) = sqrt_tmp / sqrt_2gamma;
-            end
         end
         
         function ret_obj = set_inclination_angle(obj, angle_degree)
@@ -158,64 +145,74 @@ classdef ekf_estimator
             euler_angles = [roll; pitch; yaw];
         end
         
-        function ret_obj = complementary_filter(obj, gx, gy, gz, wx, wy, wz, mx, my, mz, dt)
-            %constant
-            q_identy = [1; 0; 0; 0];
-            
-            %normalize accelerometer and magnetometer's reading
-            accelerometer = [gx; gy; gz];
-            accelerometer = accelerometer / norm(accelerometer);
+        function ret_obj = predict(obj, gx, gy, gz, wx, wy, wz, mx, my, mz, dt)
+            %normalize gravity vector
+            gravity = [gx; gy; gz];
+            gravity = gravity / norm(gravity);
             magnetometer = [mx; my; mz];
             magnetometer = magnetometer / norm(magnetometer);
             
-            %quaternion ingegration
+            %update: quaternion ingegration
             half_dt = -0.5 * dt;
             w = [0; wx; wy; wz];
-            q_dot = obj.quaternion_mult(w, obj.q_last);
-            q_gyro = [obj.q_last(1) + q_dot(1) * half_dt;
-                      obj.q_last(2) + q_dot(2) * half_dt;
-                      obj.q_last(3) + q_dot(3) * half_dt;
-                      obj.q_last(4) + q_dot(4) * half_dt];
-            q_gyro = obj.quat_normalize(q_gyro);
+            q_dot = obj.quaternion_mult(w, obj.x_last);
+            x_a_priori = [obj.x_last(1) + q_dot(1) * half_dt;
+                      obj.x_last(2) + q_dot(2) * half_dt;
+                      obj.x_last(3) + q_dot(3) * half_dt;
+                      obj.x_last(4) + q_dot(4) * half_dt];
+            x_a_priori = obj.quat_normalize(x_a_priori);
             
-            %calculate predicted gravity vector
-            conj_q_gyro = obj.quaternion_conj(q_gyro);
-            R_gyro = obj.prepare_body_to_earth_rotation_matrix(conj_q_gyro);
-            g_predict = R_gyro * accelerometer;
-            g_predict = g_predict / norm(g_predict);
-                        
-            %calculate predicted magnetic field vector
-            l_predict = R_gyro * magnetometer; 
-            l_predict = l_predict / norm(l_predict);
+            F = obj.I_4x4 + (1.0/2.0) * ...
+                [0   -wx  -wy  -wz;
+                 wx    0   wz  -wy;
+                 wy  -wz    0   wx;
+                 wz   wy  -wx    0];
             
-            %calculate delta change of quaternion for fusing gyroscope and aceelerometer
-            weight_accel = 0.005;
-            delta_q_acc = obj.convert_gravity_to_quat(g_predict);
-            delta_q_acc = obj.quat_normalize(delta_q_acc);
-            bar_delta_q_acc = obj.lerp(q_identy, delta_q_acc, weight_accel);
-            bar_delta_q_acc = obj.quat_normalize(bar_delta_q_acc);
+            obj.P = F*obj.P*F.' + obj.Q;
             
-            %calculate delta change of quaternion for fusing gyroscope and magnetometer
-            weight_mag = 0.005;
-            delta_q_mag = obj.convert_magnetic_field_to_quat(l_predict);
-            delta_q_mag = obj.quat_normalize(delta_q_mag);
-            bar_delta_q_mag = obj.lerp(q_identy, delta_q_mag, weight_mag);
-            bar_delta_q_mag = obj.quat_normalize(bar_delta_q_mag);
+            q0 = x_a_priori(1);
+            q1 = x_a_priori(2);
+            q2 = x_a_priori(3);
+            q3 = x_a_priori(4);
             
-            %fuse gyroscope, accelerometer and magnetometer using delte change
-            q_delta_acc_mag = obj.quaternion_mult(bar_delta_q_acc, bar_delta_q_mag);
-            obj.q_estimate = obj.quaternion_mult(q_gyro, q_delta_acc_mag);
-            obj.q_last = obj.q_estimate;
-                        
+            %correction: acceleromater
+            H_accel = [-2*q2   2*q3  -2*q0  2*q1;
+                        2*q1   2*q0   2*q3  2*q2;
+                        2*q0  -2*q1  -2*q2  2*q3];
+            
+            %calculate kalman gain
+            H_accel_t = H_accel.';
+            PHt_accel = obj.P * H_accel_t;
+            K_accel = PHt_accel * inv(H_accel * PHt_accel + obj.R_accel);
+            %disp(K_accel)
+            
+            %prediction of gravity vector using gyroscope
+            h_accel = [2 * (q1*q3 - q0*q2);
+                       2 * (q0*q1 + q2*q3);
+                       q0*q0 - q1*q1 - q2*q2 + q3*q3];
+                   
+            %residual
+            epsilon_accel = K_accel * (gravity - h_accel);
+            epsilon_accel(4) = 0;
+            epsilon_accel = obj.quat_normalize(epsilon_accel);
+            
+            %a posterior estimation
+            obj.x_a_posterior = obj.quaternion_mult(x_a_priori, epsilon_accel);
+            obj.x_a_posterior = obj.quat_normalize(obj.x_a_posterior);
+            obj.P = (obj.I_4x4 - K_accel*H_accel) * obj.P;
+            %disp(obj.P);
+            
             %return the conjugated quaternion since we use the opposite convention compared to the paper
             %paper: quaternion of earth frame to body-fixed frame
             %us: quaternion of body-fixed frame to earth frame
-            obj.q_estimate = obj.quaternion_conj(obj.q_estimate);
-            obj.q_estimate = obj.quaternion_mult(obj.q_inclination, obj.q_estimate);
-            euler_angles = obj.quat_to_euler(obj.q_estimate);
+            obj.x_a_posterior = obj.quaternion_conj(obj.x_a_posterior);
+            obj.x_a_posterior = obj.quaternion_mult(obj.q_inclination, obj.x_a_posterior);
 
-            obj.R = obj.quat_to_rotation_matrix(obj.q_estimate);
+            %update rotation matrix for position estimation
+            obj.R = obj.quat_to_rotation_matrix(obj.x_a_posterior);
             
+            %update euler angles for visualization
+            euler_angles = obj.quat_to_euler(obj.x_a_posterior);
             obj.roll = euler_angles(1);
             obj.pitch = euler_angles(2);
             obj.yaw = euler_angles(3);

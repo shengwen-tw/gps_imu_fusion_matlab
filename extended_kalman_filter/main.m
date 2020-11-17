@@ -102,12 +102,12 @@ for i = 2: data_num
     
     %attitude estimation
     ekf = ...
-        ekf.complementary_filter(gravity(1), gravity(2), gravity(3), ...
-                                  gyro_raw_x(i), gyro_raw_y(i), gyro_raw_z(i), ...
-                                  mag_raw_x(i), mag_raw_y(i), mag_raw_z(i), dt);
+        ekf.predict(gravity(1), gravity(2), gravity(3), ...
+                    gyro_raw_x(i), gyro_raw_y(i), gyro_raw_z(i), ...
+                    mag_raw_x(i), mag_raw_y(i), mag_raw_z(i), dt);
     
     roll(i) = ekf.roll;
-    pitch(i) =ekf.pitch;
+    pitch(i) = ekf.pitch;
     yaw(i) = ekf.yaw;                   
 end
 
