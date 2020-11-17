@@ -100,7 +100,6 @@ for i = 2: data_num
     gravity_y_arr(i) = gravity(2);
     gravity_z_arr(i) = gravity(3);
     
-    %attitude estimation
     ekf = ...
         ekf.predict(gyro_raw_x(i), gyro_raw_y(i), gyro_raw_z(i), dt);
     
@@ -110,9 +109,13 @@ for i = 2: data_num
     ekf = ...
         ekf.mag_correct(mag_raw_x(i), mag_raw_y(i), mag_raw_z(i));
     
-    roll(i) = ekf.roll;
-    pitch(i) = ekf.pitch;
-    yaw(i) = ekf.yaw + 23.5;                   
+    q = ekf.get_quaternion();
+    
+    euler_angles = ekf.quat_to_euler(q);
+    
+    roll(i) = euler_angles(1);
+    pitch(i) = euler_angles(2);
+    yaw(i) = euler_angles(3);
 end
 
 %%%%%%%%

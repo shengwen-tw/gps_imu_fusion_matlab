@@ -145,6 +145,10 @@ classdef ekf_estimator
             euler_angles = [roll; pitch; yaw];
         end
         
+        function quaternion = get_quaternion(obj)
+            quaternion = obj.x_a_posterior;
+        end
+        
         function ret_obj = predict(obj, wx, wy, wz,dt)
             %update: quaternion ingegration
             half_dt = -0.5 * dt;
@@ -216,12 +220,6 @@ classdef ekf_estimator
             %update rotation matrix for position estimation
             obj.R = obj.quat_to_rotation_matrix(obj.x_a_posterior);
             
-            %update euler angles for visualization
-            euler_angles = obj.quat_to_euler(obj.x_a_posterior);
-            obj.roll = euler_angles(1);
-            obj.pitch = euler_angles(2);
-            obj.yaw = euler_angles(3);
-            
             ret_obj = obj;
         end
         
@@ -272,12 +270,6 @@ classdef ekf_estimator
 
             %update rotation matrix for position estimation
             obj.R = obj.quat_to_rotation_matrix(obj.x_a_posterior);
-            
-            %update euler angles for visualization
-            euler_angles = obj.quat_to_euler(obj.x_a_posterior);
-            obj.roll = euler_angles(1);
-            obj.pitch = euler_angles(2);
-            obj.yaw = euler_angles(3);
             
             ret_obj = obj;
         end
