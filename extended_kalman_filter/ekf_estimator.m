@@ -12,10 +12,10 @@ classdef ekf_estimator
         x_a_posterior = [1; 0; 0; 0]
         
         %process covariance matrix
-        P = [5 0 0 0;
-             0 5 0 0;
-             0 0 5 0;
-             0 0 0 5];
+        P = [3 0 0 0;
+             0 2 0 0;
+             0 0 2 0;
+             0 0 0 2];
         
         %prediction covariance matrix
         Q = [1e-6     0     0     0;
@@ -24,9 +24,9 @@ classdef ekf_estimator
              0        0     0  1e-6];
          
        %observation covariance matrix of acceleromter
-        R_accel = [1 0 0
-                   0 1 0;
-                   0 0 1];
+        R_accel = [0.5 0 0
+                   0 0.5 0;
+                   0 0 0.5];
         
         %observation covariance matrix of magnetometer
         R_mag = [10     0     0;

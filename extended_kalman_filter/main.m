@@ -112,7 +112,7 @@ for i = 2: data_num
     
     roll(i) = ekf.roll;
     pitch(i) = ekf.pitch;
-    yaw(i) = ekf.yaw;                   
+    yaw(i) = ekf.yaw + 23.5;                   
 end
 
 %%%%%%%%
