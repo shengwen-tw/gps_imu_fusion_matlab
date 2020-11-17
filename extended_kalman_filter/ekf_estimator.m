@@ -12,26 +12,26 @@ classdef ekf_estimator
         x_a_posterior = [1; 0; 0; 0]
         
         %process covariance matrix
-        P = [10 0 0 0;
-             0 10 0 0;
-             0 0 10 0;
-             0 0 0 10];
+        P = [2 0 0 0;
+             0 2 0 0;
+             0 0 2 0;
+             0 0 0 2];
         
         %prediction covariance matrix
-        Q = [0.1 0 0 0;
-             0 0.1 0 0;
-             0 0 0.1 0;
-             0 0 0 0.1];
+        Q = [1e-6     0     0     0;
+             0     1e-6     0     0;
+             0        0  1e-6     0;
+             0        0     0  1e-6];
          
        %observation covariance matrix of acceleromter
-        R_accel = [5 0 0
-                   0 5 0;
-                   0 0 5];
+        R_accel = [1 0 0
+                   0 1 0;
+                   0 0 1];
         
         %observation covariance matrix of magnetometer
-        R_mag = [1 0 0;
-                 0 1 0;
-                 0 0 1];
+        R_mag = [0.01     0     0;
+                 0     0.01     0;
+                 0        0  0.01];
 
         %rotation matrix of current attitude
         R = [1 0 0;
@@ -145,35 +145,37 @@ classdef ekf_estimator
             euler_angles = [roll; pitch; yaw];
         end
         
-        function ret_obj = predict(obj, gx, gy, gz, wx, wy, wz, mx, my, mz, dt)
-            %normalize gravity vector
-            gravity = [gx; gy; gz];
-            gravity = gravity / norm(gravity);
-            magnetometer = [mx; my; mz];
-            magnetometer = magnetometer / norm(magnetometer);
-            
+        function ret_obj = predict(obj, wx, wy, wz,dt)
             %update: quaternion ingegration
             half_dt = -0.5 * dt;
             w = [0; wx; wy; wz];
             q_dot = obj.quaternion_mult(w, obj.x_last);
-            x_a_priori = [obj.x_last(1) + q_dot(1) * half_dt;
-                      obj.x_last(2) + q_dot(2) * half_dt;
-                      obj.x_last(3) + q_dot(3) * half_dt;
-                      obj.x_last(4) + q_dot(4) * half_dt];
-            x_a_priori = obj.quat_normalize(x_a_priori);
+            obj.x_a_priori = [obj.x_last(1) + q_dot(1) * half_dt;
+                              obj.x_last(2) + q_dot(2) * half_dt;
+                              obj.x_last(3) + q_dot(3) * half_dt;
+                              obj.x_last(4) + q_dot(4) * half_dt];
+            obj.x_a_priori = obj.quat_normalize(obj.x_a_priori);
             
-            F = obj.I_4x4 + (1.0/2.0) * ...
+            F = obj.I_4x4 + (0.5 * dt *...
                 [0   -wx  -wy  -wz;
                  wx    0   wz  -wy;
                  wy  -wz    0   wx;
-                 wz   wy  -wx    0];
+                 wz   wy  -wx    0]);
             
             obj.P = F*obj.P*F.' + obj.Q;
             
-            q0 = x_a_priori(1);
-            q1 = x_a_priori(2);
-            q2 = x_a_priori(3);
-            q3 = x_a_priori(4);
+            ret_obj = obj;
+        end
+        
+        function ret_obj = correct(obj, gx, gy, gz)
+            %normalize gravity vector
+            gravity = [gx; gy; gz];
+            gravity = gravity / norm(gravity);
+            
+            q0 = obj.x_a_priori(1);
+            q1 = obj.x_a_priori(2);
+            q2 = obj.x_a_priori(3);
+            q3 = obj.x_a_priori(4);
             
             %correction: acceleromater
             H_accel = [-2*q2   2*q3  -2*q0  2*q1;
@@ -184,7 +186,7 @@ classdef ekf_estimator
             H_accel_t = H_accel.';
             PHt_accel = obj.P * H_accel_t;
             K_accel = PHt_accel * inv(H_accel * PHt_accel + obj.R_accel);
-            %disp(K_accel)
+            %disp(K_accel);
             
             %prediction of gravity vector using gyroscope
             h_accel = [2 * (q1*q3 - q0*q2);
@@ -194,13 +196,15 @@ classdef ekf_estimator
             %residual
             epsilon_accel = K_accel * (gravity - h_accel);
             epsilon_accel(4) = 0;
-            epsilon_accel = obj.quat_normalize(epsilon_accel);
+            %epsilon_accel = obj.quat_normalize(epsilon_accel);
             
             %a posterior estimation
-            obj.x_a_posterior = obj.quaternion_mult(x_a_priori, epsilon_accel);
+            obj.x_a_posterior = obj.x_a_priori + epsilon_accel;
             obj.x_a_posterior = obj.quat_normalize(obj.x_a_posterior);
             obj.P = (obj.I_4x4 - K_accel*H_accel) * obj.P;
             %disp(obj.P);
+            
+            obj.x_last = obj.x_a_posterior;
             
             %return the conjugated quaternion since we use the opposite convention compared to the paper
             %paper: quaternion of earth frame to body-fixed frame
