@@ -140,18 +140,19 @@ for i = 2: data_num
     
     %collect rotation vectors for visualization
     if mod(i, b1_visual_sample_cnt) == 0
+        Rt = ekf.R.';
         quiver_orig_x(j) = pos_enu(1);
         quiver_orig_y(j) = pos_enu(2);
         quiver_orig_z(j) = pos_enu(3);
-        quiver_b1_u(j) = ekf.R(2, 1);
-        quiver_b1_v(j) = ekf.R(1, 1);
-        quiver_b1_w(j) = -ekf.R(3, 1);
-        quiver_b2_u(j) = ekf.R(2, 2);
-        quiver_b2_v(j) = ekf.R(1, 2);
-        quiver_b2_w(j) = -ekf.R(3, 2);
-        quiver_b3_u(j) = ekf.R(2, 3);
-        quiver_b3_v(j) = ekf.R(1, 3);
-        quiver_b3_w(j) = -ekf.R(3, 3);
+        quiver_b1_u(j) = Rt(2, 1);
+        quiver_b1_v(j) = Rt(1, 1);
+        quiver_b1_w(j) = -Rt(3, 1);
+        quiver_b2_u(j) = Rt(2, 2);
+        quiver_b2_v(j) = Rt(1, 2);
+        quiver_b2_w(j) = -Rt(3, 2);
+        quiver_b3_u(j) = Rt(2, 3);
+        quiver_b3_v(j) = Rt(1, 3);
+        quiver_b3_w(j) = -Rt(3, 3);
         j = j + 1;
     end
     
