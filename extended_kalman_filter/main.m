@@ -101,21 +101,54 @@ for i = 2: data_num
     gravity_y_arr(i) = gravity(2);
     gravity_z_arr(i) = gravity(3);
     
-    ekf = ...
-        ekf.predict(gyro_raw_x(i), gyro_raw_y(i), gyro_raw_z(i), dt);
+    %ekf state update (prediction)
+    ekf = ekf.predict(accel_lpf_x(i), accel_lpf_y(i), accel_lpf_z(i), ...
+                      gyro_raw_x(i), gyro_raw_y(i), gyro_raw_z(i), dt);
     
-    ekf = ...
-        ekf.accel_correct(gravity(1), gravity(2), gravity(3));
+    %ekf correction from gravity vector
+    ekf = ekf.accel_correct(gravity(1), gravity(2), gravity(3));
     
-    ekf = ...
-        ekf.mag_correct(mag_raw_x(i), mag_raw_y(i), mag_raw_z(i));
+    %ekf correction from magnetometer
+    ekf = ekf.mag_correct(mag_raw_x(i), mag_raw_y(i), mag_raw_z(i));
     
+    %ekf correction from gps sensor
+    if (abs(gps_ned_vx(i) - gps_ned_vx(i - 1)) > 1e-4 && abs(gps_ned_vy(i) - gps_ned_vy(i - 1)) > 1e-4)
+        ekf = ekf.gps_correct(longitude(i), latitude(i), gps_ned_vx(i), gps_ned_vy(i));
+    end
+    
+    %ekf correction from height sensor
+    ekf = ekf.height_correct(barometer_height(i), barometer_vz(i));
+    
+    fused_enu_x(i) =  ekf.x_a_posterior(1);
+    fused_enu_y(i) = ekf.x_a_posterior(2);
+    fused_enu_z(i) = ekf.x_a_posterior(3);
+    fused_enu_vx(i) = ekf.x_a_posterior(4);
+    fused_enu_vy(i) = ekf.x_a_posterior(5);
+    fused_enu_vz(i) = ekf.x_a_posterior(6);
+
     %gps, barometer raw signal and transform it into enu frame for
     %visualization
-    position_enu = ekf.convert_gps_ellipsoid_coordinates_to_enu(longitude(i), latitude(i), barometer_height(i));
-    gps_enu_x(i) = position_enu(1);
-    gps_enu_y(i) = position_enu(2);
-    gps_enu_z(i) = position_enu(3);
+    pos_enu = ekf.convert_gps_ellipsoid_coordinates_to_enu(longitude(i), latitude(i), barometer_height(i));
+    gps_enu_x(i) = pos_enu(1);
+    gps_enu_y(i) = pos_enu(2);
+    gps_enu_z(i) = pos_enu(3);
+    
+    %collect rotation vectors for visualization
+    if mod(i, b1_visual_sample_cnt) == 0
+        quiver_orig_x(j) = pos_enu(1);
+        quiver_orig_y(j) = pos_enu(2);
+        quiver_orig_z(j) = pos_enu(3);
+        quiver_b1_u(j) = ekf.R(2, 1);
+        quiver_b1_v(j) = ekf.R(1, 1);
+        quiver_b1_w(j) = -ekf.R(3, 1);
+        quiver_b2_u(j) = ekf.R(2, 2);
+        quiver_b2_v(j) = ekf.R(1, 2);
+        quiver_b2_w(j) = -ekf.R(3, 2);
+        quiver_b3_u(j) = ekf.R(2, 3);
+        quiver_b3_v(j) = ekf.R(1, 3);
+        quiver_b3_w(j) = -ekf.R(3, 3);
+        j = j + 1;
+    end
     
     q = ekf.get_quaternion();
     euler_angles = ekf.quat_to_euler(q);
@@ -201,9 +234,8 @@ plot(gps_enu_x, gps_enu_y, ...
      'Marker', 'o', ...
      'LineStyle', 'None', ...
      'MarkerSize', 3);
-%plot(fused_enu_x, fused_enu_y, 'Color', 'r');
-%legend('gps trajectory', 'fused trajectory') ;
-legend('gps trajectory');
+plot(fused_enu_x, fused_enu_y, 'Color', 'r');
+legend('gps trajectory', 'fused trajectory') ;
 title('position (enu frame)');
 xlabel('x [m]');
 ylabel('y [m]');
@@ -217,16 +249,15 @@ plot3(gps_enu_x, gps_enu_y, barometer_height, ...
       'Marker', 'o', ...
       'LineStyle', 'None', ...
       'MarkerSize', 2);
-%plot3(fused_enu_x, fused_enu_y, fused_enu_z, 'Color', 'm');
-%quiver3(quiver_orig_x,  quiver_orig_y,  quiver_orig_z, ...
-%        quiver_b1_u,  quiver_b1_v,  quiver_b1_w, 'Color', 'r', 'AutoScaleFactor', 0.2);
-%quiver3(quiver_orig_x,  quiver_orig_y,  quiver_orig_z, ...
-%        quiver_b2_u,  quiver_b2_v,  quiver_b2_w, 'Color', 'g', 'AutoScaleFactor', 0.2);
-%quiver3(quiver_orig_x,  quiver_orig_y,  quiver_orig_z, ...
-%        quiver_b3_u,  quiver_b3_v,  quiver_b3_w, 'Color', 'b', 'AutoScaleFactor', 0.2);
-legend('gps trajectory');
+plot3(fused_enu_x, fused_enu_y, fused_enu_z, 'Color', 'm');
+quiver3(quiver_orig_x,  quiver_orig_y,  quiver_orig_z, ...
+        quiver_b1_u,  quiver_b1_v,  quiver_b1_w, 'Color', 'r', 'AutoScaleFactor', 0.2);
+quiver3(quiver_orig_x,  quiver_orig_y,  quiver_orig_z, ...
+        quiver_b2_u,  quiver_b2_v,  quiver_b2_w, 'Color', 'g', 'AutoScaleFactor', 0.2);
+quiver3(quiver_orig_x,  quiver_orig_y,  quiver_orig_z, ...
+        quiver_b3_u,  quiver_b3_v,  quiver_b3_w, 'Color', 'b', 'AutoScaleFactor', 0.2);
 %legend('gps trajectory', 'b1 vector', 'b2 vector', 'b3 vector') 
-%legend('gps trajectory', 'fused trajectory', 'b1 vector', 'b2 vector', 'b3 vector') 
+legend('gps trajectory', 'fused trajectory', 'b1 vector', 'b2 vector', 'b3 vector') 
 title('position (enu frame)');
 xlabel('x [m]');
 ylabel('y [m]');
@@ -234,8 +265,6 @@ zlabel('z [m]');
 daspect([1 1 1])
 grid on
 view(-10,20);
-
-
 disp("Press any key to leave");
 pause;
 close all;
