@@ -1,38 +1,43 @@
 classdef eskf
     %assumption: NED coordinate system
     
-    properties
-        %update time
-        dt = 0.001 %100Hz, 0.001s
-        
-        %nomnial states (16x1)
-        p = [0; 0; 0];    %position
-        v = [0; 0; 0];    %velocity
-        q = [1; 0; 0; 0]; %quaternion
-        ab = [0; 0; 0];   %acceleromter bias
-        wb = [0; 0; 0];   %gyroscope bias
-        g = [0; 0; 9.81]  %gravity vector
-        
-        %error states (15x1)
-        delta_p = [0; 0; 0];        %error position
-        delta_v = [0; 0; 0];        %error velocity
-        delta_theta = [1; 0; 0; 0]; %error angle vector
-        delta_ab = [0; 0; 0];       %error acceleromter bias
-        delta_wb = [0; 0; 0];       %error gyroscope bias
-        
+    properties 
+        %nomnial state
+        x_nominal = [1;  %q0
+                     0;  %q2
+                     0;  %q2
+                     0]; %q3
+                      
+        %error state
+        delta_x = [0;  %theta_x
+                   0;  %theta_y
+                   0]; %theta_z
+                      
         %attitude direction cosine matrix
-        R = eye(3);  %body-fixed frame to inertial frame
-        Rt = eye(3); %inertial frame to body-fixed frame
+        R = eye(3);  %inertial frame to body-fixed frame
+        Rt = eye(3); %body-fixed frame to inertial frame
         
         %noise parameters
         V_i = [0; 0; 0];     %white noise standard deviation of the acceleromter
         Theta_i = [0; 0; 0]; %white noise standard deviation of the gyroscope
-        A_i = [0; 0; 0];     %white noise standard deviation of the acceleromater bias
-        Omega_i = [0; 0; 0]; %white noise standard deviation of the gyroscope bias
         
-        %covariance matrices
-        P = eye(16);
-        Q_i = eye(16);
+        %white noise covariance
+        Q_i = [Theta_i(1) 0 0;
+               0 Theta_i(2) 0;
+               0 0 Theta_i(3)];
+        
+        %process covariance matrix of error state
+        P = [1e-3 0 0;
+             0 1e-3 0;
+             0 0 1e-3];
+        
+        %observation covariance matrix of accelerometer
+        V_accel = [0.5 0 0;
+                   0 0.5 0;
+                   0 0 0.5];
+         
+        I_3x3 = eye(3);
+        I_4x4 = eye(4);
     end
     
     methods
@@ -55,113 +60,101 @@ classdef eskf
             skew_matrix(3, 3) = 0;
         end
         
-        function nominal_state_update(obj, accelerometer, gyroscope)
-            am = accelerometer;
-            wm = gyroscope;
+        function ret_obj = predict(obj, wx, wy, wz)
+            q_last = obj.x_nominal(1:4);
             
-            %update p
-            obj.p = obj.p + (obj.v * dt) + (1/2*(obj.R*(am - obj.ab) + obj.g) * dt * dt);
+            %first derivative of the quaternion
+            w = [0; wx; wy; wz];
+            q_dot = obj.quaternion_mult(w, q_last);
             
-            %update v
-            obj.v = v + ((R*(am - obj.ab) + obj.g) * dt);
+            %nominal state update
+            half_dt = -0.5 * dt;
+            %half_dt_squared = 0.5 * (dt * dt);
+            q_integration = [q_last(1) + q_dot(1) * half_dt;
+                             q_last(2) + q_dot(2) * half_dt;
+                             q_last(3) + q_dot(3) * half_dt;
+                             q_last(4) + q_dot(4) * half_dt];
+            q_integration = obj.quat_normalize(q_integration);
+            obj.x_nominal = [q_integration(1);  %q0
+                             q_integration(2);  %q1
+                             q_integration(3);  %q2
+                             q_integration(4)]; %q3
+                         
+            %error state update
+            F_x = obj.Rt * ([wx; wy; wz] .* dt);
+            F_i = eye(3);
+            obj.delta_x = F_x * obj.delta_x;
+            obj.P = (F_x * obj.P * F_x.') + (F_i * obj.Q * F_i.');
             
-            %update q
-            qchange = obj.dt * ...
-                [0;
-                wm(1) - obj.wb(1);
-                wm(2) - obj.wb(2);
-                wm(3) - obj.wb(3)];
-            q = obj.quaternion_mult(obj.q, q_change);
+            ret_obj = obj;
         end
         
-        function error_state_update(obj, accelerometer)
-            %update delta_p
-            obj.delta_p = obj.delta_p + (obj.delta_v * obj.dt);
+        function ret_obj = accelerometer_correct(obj, gx, gy, gz)
+            %normalize gravity vector
+            gravity = [gx; gy; gz];
+            y = gravity / norm(gravity);
             
-            %update delta_v
-            obj.delta_v = obj.delta_v + (-hat_map_3x3(obj.R * (am - obj.ab))*obj.delta_theta - obj.R*obj.delta_ab) * obj.dt;
+            q0 = obj.x_nominal(1);
+            q1 = obj.x_nominal(2);
+            q2 = obj.x_nominal(3);
+            q3 = obj.x_nominal(4);
             
-            %update delta_theta
-            obj.theta = (obj.Rt * ((obj.wm - obj.wb) * obj.dt) * obj.delta_theta) - ...
-                (obj.delta_wb * obj.dt);
+            %error state observation matrix of accelerometer
+            H_x_accel = [-2*q2   2*q3  -2*q0  2*q1;
+                          2*q1   2*q0   2*q3  2*q2;
+                          2*q0  -2*q1  -2*q2  2*q3];
+                   
+            Q_delte_theta = 0.5 * [-q1 -q2 -q3;
+                                    q0 -q3  q2;
+                                    q3  q0 -q1;
+                                   -q2  q1  q0];                
+            X_delta_x = Q_delte_theta;
+            H_accel = H_x_accel * X_delta_x;
+
+            %prediction of gravity vector using gyroscope
+            h_accel = [2 * (q1*q3 - q0*q2);
+                       2 * (q0*q1 + q2*q3);
+                       q0*q0 - q1*q1 - q2*q2 + q3*q3];
             
-            %calculate state transition matrix F_x
-            F_x = zeros(15, 15);
-            F_x(1:3, 1:3) = eye(3);
-            F_x(1:3, 4:6) = obj.dt * eye(3);
-            F_x(4:6, 4:6) = eye(3);
-            F_x(4:6, 7:9) = -hat_map_3x3(obj.R * (am - obj.ab)) * obj.dt;
-            F_x(4:6, 10:12) = -obj.R * obj.dt;
-            F_x(7:9, 7:9) = eye(3);
-            F_x(7:9, 13:15) = -obj.R * obj.dt;
-            F_x(10:12, 10:12) = eye(3);
-            F_x(13:15, 13:15) = eye(3);
+            %calculate kalman gain
+            H_accel_t = H_accel.';
+            PHt_accel = obj.P * H_accel_t;
+            K_accel = PHt_accel * inv(H_accel * PHt_accel + obj.V_accel);
+            %disp(K_accel);
             
-            %calculate state transition matrix F_i
-            F_i = zeros(15, 12);
-            F_i(4:6, 4:6) = eye(3);
-            F_i(7:9, 7:9) = eye(3);
-            F_i(10:12, 10:12) = eye(3);
-            F_i(13:15, 13:15) = eye(3);
+            %calculate error state residul
+            obj.delta_x = K_accel * (y - h_accel);
             
-            %update error state covariance matrix P
-        end
-        
-        function eskf_update(obj, accelerometer)
-            obj.nominal_state_update(accelerometer)
-            obj.error_state_update(accelerometer)
-        end
-        
-        function error_state_correct(obj)
-            qw = obj.q(1);
-            qx = obj.q(2);
-            qy = obj.q(3);
-            qz = obj.q(4);
+            %calculate a posteriori process covariance matrix
+            obj.P = (obj.I_3x3 - K_accel*H_accel) * obj.P;
             
-            Q_delta_theta = (1 / 2) * ...
-            [-qx -qy -qz;
-             +qw -qz +qy;
-             +qz +qw -qx;
-             -qy +qx +qw];
+            %error state injection
+            %delta_theta_x = obj.delta_x(1);
+            %delta_theta_y = obj.delta_x(2);
+            %delta_theta_z = obj.delta_x(3);
+            %delta_theta_norm = sqrt(delta_theta_x * delta_theta_x + ...
+            %                        delta_theta_y * delta_theta_y + ...
+            %                        delta_theta_z * delta_theta_z);
+            %q_error = [cos(delta_theta_norm / 2);
+            %           delta_theta_x;
+            %           delta_theta_y;
+            %           delta_theta_z];
+            q_error = [1;
+                       0.5 * delta_theta_x;
+                       0.5 * delta_theta_y;
+                       0.5 * delta_theta_z];
+            obj.x_nominal(1:4) = obj.quaternion_mult(obj.x_nominal(1:4), q_error);
             
-            X_delta_x = zeros(16, 16);
-            X_delta_x(1:3, 1:3) = eye(3);
-            X_delta_x(4:7, 4:7) = Q_delta_theta;
-            X_delta_x(8:13, 8:13) = eye(6);
-        end
-        
-        function nominal_state_injection(obj)
-            %inject delta_p into p
-            obj.p = obj.p + obj.delta_p;
+            %error state reset
+            obj.delta_x = [0; 0; 0];
+            G = obj.I_4x4 - (0.5 * dt * ...
+                    [0   -wx  -wy  -wz;
+                     wx    0   wz  -wy;
+                     wy  -wz    0   wx;
+                     wz   wy  -wx    0]);
+            obj.P = G * obj.P * G.';
             
-            %inject delta_v into v
-            obj.v = obj.v + obj.delta_v;
-            
-            %inject delta_theta into q
-            delta_q = [0; obj.delta_theta(1); obj.delta_theta(2); obj.delta_theta(3)];
-            obj.q = obj.quaternion_mult(obj.q, delta_q);
-            
-            %calculate direction cosine matrix R and Rt from quaternion q
-            
-            %inject delta_ab_hat into ab
-            
-            %inject delta_wb_hat into wb
-        end
-        
-        function error_state_reset(obj)
-            %reset error state delta_x
-            obj.delta_p = [0; 0; 0];
-            obj.delta_v = [0; 0; 0];
-            obj.delta_theta = [0; 0; 0];
-            obj.delta_ab = [0; 0; 0];
-            obj.delta_wb = [0; 0; 0];
-            
-            %reset covariance matrix P
-        end
-        
-        function eskf_correct(obj)
-            obj.nominal_state_injection()
-            obj.error_state_reset()
+            ret_obj = obj;
         end
     end
 end
