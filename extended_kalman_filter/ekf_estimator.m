@@ -58,9 +58,9 @@ classdef ekf_estimator
              0 0 0 0 0 0 0 0 0 1e-6]; %q3
          
        %observation covariance matrix of the acceleromter
-        R_accel = [0.5 0 0
-                   0 0.5 0;
-                   0 0 0.5];
+        R_accel = [5e-1 0 0
+                   0 5e-1 0;
+                   0 0 5e-1];
         
         %observation covariance matrix of the magnetometer
         R_mag = [10 0 0;
@@ -192,7 +192,12 @@ classdef ekf_estimator
         end
         
         function quaternion = get_quaternion(obj)
+            %return the conjugated quaternion since we use the opposite convention compared to the paper
+            %paper: quaternion of earth frame to body-fixed frame
+            %us: quaternion of body-fixed frame to earth frame
             quaternion = obj.x_a_posterior(7:10);
+            quaternion = obj.quaternion_conj(quaternion);
+            %quaternion = obj.quaternion_mult(obj.q_inclination, quaternion);
         end
 
         function vec_enu = convert_3x1_vector_ned_to_enu(obj, vec_ned)
@@ -349,11 +354,6 @@ classdef ekf_estimator
             %update rotation matrix for position estimation
             obj.R = obj.quat_to_rotation_matrix(obj.x_a_posterior(7:10));
             
-            %return the conjugated quaternion since we use the opposite convention compared to the paper
-            %paper: quaternion of earth frame to body-fixed frame
-            %us: quaternion of body-fixed frame to earth frame
-            obj.x_a_posterior(7:10) = obj.quaternion_conj(obj.x_a_posterior(7:10));
-            
             ret_obj = obj;
         end
         
@@ -400,12 +400,6 @@ classdef ekf_estimator
             
             %update rotation matrix for position estimation
             obj.R = obj.quat_to_rotation_matrix(obj.x_a_posterior(7:10));
-            
-            %return the conjugated quaternion since we use the opposite convention compared to the paper
-            %paper: quaternion of earth frame to body-fixed frame
-            %us: quaternion of body-fixed frame to earth frame
-            obj.x_a_posterior(7:10) = obj.quaternion_conj(obj.x_a_posterior(7:10));
-            %obj.x_a_posterior = obj.quaternion_mult(obj.q_inclination, obj.x_a_posterior);
             
             ret_obj = obj;
         end
