@@ -41,9 +41,14 @@ classdef eskf_estimator
              0 0 1e-6];
         
         %observation covariance matrix of accelerometer
-        V_accel = [2 0 0;
-                   0 2 0;
-                   0 0 2];
+        V_accel = [7e-1 0 0;
+                   0 7e-1 0;
+                   0 0 7e-1];
+               
+        %observation covariance matrix of accelerometer
+        V_mag = [5 0 0;
+                 0 5 0;
+                 0 0 5];
          
         I_3x3 = eye(3);
         I_4x4 = eye(4);
@@ -295,6 +300,75 @@ classdef eskf_estimator
             
             %calculate a posteriori process covariance matrix
             obj.P = (obj.I_3x3 - K_accel*H_accel) * obj.P;
+            
+            %error state injection
+            delta_theta_x = obj.delta_x(1);
+            delta_theta_y = obj.delta_x(2);
+            delta_theta_z = obj.delta_x(3);
+            %delta_theta_norm = sqrt(delta_theta_x * delta_theta_x + ...
+            %                        delta_theta_y * delta_theta_y + ...
+            %                        delta_theta_z * delta_theta_z);
+            %q_error = [cos(delta_theta_norm / 2);
+            %           delta_theta_x;
+            %           delta_theta_y;
+            %           delta_theta_z];
+            q_error = [1;
+                       0.5 * delta_theta_x;
+                       0.5 * delta_theta_y;
+                       0.5 * delta_theta_z];
+            obj.x_nominal(1:4) = obj.quaternion_mult(obj.x_nominal(1:4), q_error);
+            
+            %error state reset
+            %G = obj.I_3x3 - (0.5 * hat_map_3x3([delta_theta_x;
+            %                                    delta_theta_y;
+            %                                    delta_theta_z]));
+            G = obj.I_3x3;
+            obj.P = G * obj.P * G.';
+            
+            %update rotation matrix for position estimation
+            obj.R = obj.quat_to_rotation_matrix(obj.x_nominal(1:4));
+            
+            ret_obj = obj;
+        end
+        
+        function ret_obj = mag_correct(obj, mx, my, mz)
+            %normalize the magnetic field vector
+            mag = [mx; my; mz];
+            y = mag / norm(mag);
+            
+            q0 = obj.x_nominal(1);
+            q1 = obj.x_nominal(2);
+            q2 = obj.x_nominal(3);
+            q3 = obj.x_nominal(4);
+            
+            %error state observation matrix of accelerometer
+            H_x_mag = [ 2*q0  2*q1  -2*q2  -2*q3;
+                       -2*q3  2*q2   2*q1  -2*q0;
+                        2*q2  2*q3   2*q0   2*q1];
+                   
+            Q_delte_theta = 0.5 * [-q1 -q2 -q3;
+                                    q0 -q3  q2;
+                                    q3  q0 -q1;
+                                   -q2  q1  q0];                
+            X_delta_x = Q_delte_theta;
+            H_mag = H_x_mag * X_delta_x;
+
+            %prediction of gravity vector using gyroscope
+            h_mag = [q0*q0 + q1*q1 - q2*q2 - q3*q3;
+                     2 * (q1*q2 - q0*q3);
+                     2 * (q0*q2 + q1*q3)];
+            
+            %calculate kalman gain
+            H_mag_t = H_mag.';
+            PHt_mag = obj.P * H_mag_t;
+            K_mag = PHt_mag * inv(H_mag * PHt_mag + obj.V_mag);
+            %disp(K_mag);
+            
+            %calculate error state residul
+            obj.delta_x = K_mag * (y - h_mag);
+            
+            %calculate a posteriori process covariance matrix
+            obj.P = (obj.I_3x3 - K_mag*H_mag) * obj.P;
             
             %error state injection
             delta_theta_x = obj.delta_x(1);
