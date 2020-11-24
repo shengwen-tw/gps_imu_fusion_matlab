@@ -31,9 +31,9 @@ classdef eskf_estimator
         Theta_i = [0.1; 0.1; 0.1]; %white noise standard deviation of the gyroscope
         
         %white noise covariance
-        Q_i = [10 0 0;
-               0 10 0;
-               0 0 10];
+        Q_i = [1e-5 0 0;
+               0 1e-5 0;
+               0 0 1e-5];
         
         %process covariance matrix of error state
         P = [1e-6 0 0;
@@ -41,9 +41,9 @@ classdef eskf_estimator
              0 0 1e-6];
         
         %observation covariance matrix of accelerometer
-        V_accel = [10 0 0;
-                   0 10 0;
-                   0 0 10];
+        V_accel = [2 0 0;
+                   0 2 0;
+                   0 0 2];
          
         I_3x3 = eye(3);
         I_4x4 = eye(4);
@@ -249,7 +249,6 @@ classdef eskf_estimator
             %error state update
             F_x = obj.I_3x3 - obj.hat_map_3x3([wx; wy; wz] .* dt);
             F_i = eye(3);
-            obj.delta_x = F_x * obj.delta_x;
             obj.P = (F_x * obj.P * F_x.') + (F_i * obj.Q_i * F_i.');
             
             %update rotation matrix for position estimation
@@ -315,7 +314,6 @@ classdef eskf_estimator
             obj.x_nominal(1:4) = obj.quaternion_mult(obj.x_nominal(1:4), q_error);
             
             %error state reset
-            obj.delta_x = [0; 0; 0];
             %G = obj.I_3x3 - (0.5 * hat_map_3x3([delta_theta_x;
             %                                    delta_theta_y;
             %                                    delta_theta_z]));
