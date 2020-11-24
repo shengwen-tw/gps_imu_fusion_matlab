@@ -108,7 +108,8 @@ for i = 2: data_num
     gravity_z_arr(i) = gravity(3);
     
     %eskf state update (prediction)
-    eskf = eskf.predict(gyro_raw_x(i), gyro_raw_y(i), gyro_raw_z(i), dt);
+    eskf = eskf.predict(accel_lpf_x(i), accel_lpf_y(i), accel_lpf_z(i), ...
+                        gyro_raw_x(i), gyro_raw_y(i), gyro_raw_z(i), dt);
     
     %eskf correction from gravity vector
     eskf = eskf.accel_correct(gravity(1), gravity(2), gravity(3));
@@ -118,53 +119,53 @@ for i = 2: data_num
     
     %eskf correction from gps sensor
     if (abs(gps_ned_vx(i) - gps_ned_vx(i - 1)) > 1e-4 && abs(gps_ned_vy(i) - gps_ned_vy(i - 1)) > 1e-4)
-        %eskf = eskf.gps_correct(longitude(i), latitude(i), gps_ned_vx(i), gps_ned_vy(i));
+        eskf = eskf.gps_correct(longitude(i), latitude(i), gps_ned_vx(i), gps_ned_vy(i));
     end
     
     %eskf correction from height sensor
-    %eskf = eskf.height_correct(barometer_height(i), barometer_vz(i));
+    eskf = eskf.height_correct(barometer_height(i), barometer_vz(i));
     
-    %fused_enu_x(i) =  eskf.x_a_posterior(1);
-    %fused_enu_y(i) = eskf.x_a_posterior(2);
-    %fused_enu_z(i) = eskf.x_a_posterior(3);
-    %fused_enu_vx(i) = eskf.x_a_posterior(4);
-    %fused_enu_vy(i) = eskf.x_a_posterior(5);
-    %fused_enu_vz(i) = eskf.x_a_posterior(6);
+    fused_enu_x(i) =  eskf.x_nominal(1);
+    fused_enu_y(i) = eskf.x_nominal(2);
+    fused_enu_z(i) = eskf.x_nominal(3);
+    fused_enu_vx(i) = eskf.x_nominal(4);
+    fused_enu_vy(i) = eskf.x_nominal(5);
+    fused_enu_vz(i) = eskf.x_nominal(6);
 
-    %vel_ned_body = eskf.R.' * [fused_enu_vy(i); fused_enu_vx(i); -fused_enu_vz(i)];
+    vel_ned_body = eskf.R.' * [fused_enu_vy(i); fused_enu_vx(i); -fused_enu_vz(i)];
     
     %gps, barometer raw signal and transform it into enu frame for
     %visualization
-    %pos_enu = eskf.convert_gps_ellipsoid_coordinates_to_enu(longitude(i), latitude(i), barometer_height(i));
-    %gps_enu_x(i) = pos_enu(1);
-    %gps_enu_y(i) = pos_enu(2);
-    %gps_enu_z(i) = pos_enu(3);
+    pos_enu = eskf.convert_gps_ellipsoid_coordinates_to_enu(longitude(i), latitude(i), barometer_height(i));
+    gps_enu_x(i) = pos_enu(1);
+    gps_enu_y(i) = pos_enu(2);
+    gps_enu_z(i) = pos_enu(3);
     
     %collect rotation vectors for visualization
-    %if mod(i, b1_visual_sample_cnt) == 0
-    %    Rt = eskf.R.';
-    %    quiver_orig_x(j) = pos_enu(1);
-    %    quiver_orig_y(j) = pos_enu(2);
-    %    quiver_orig_z(j) = pos_enu(3);
-    %   quiver_b1_u(j) = Rt(2, 1);
-    %    quiver_b1_v(j) = Rt(1, 1);
-    %    quiver_b1_w(j) = -Rt(3, 1);
-    %    quiver_b2_u(j) = Rt(2, 2);
-    %    quiver_b2_v(j) = Rt(1, 2);
-    %    quiver_b2_w(j) = -Rt(3, 2);
-    %    quiver_b3_u(j) = Rt(2, 3);
-    %    quiver_b3_v(j) = Rt(1, 3);
-    %    quiver_b3_w(j) = -Rt(3, 3);
-    %    j = j + 1;
-    %end
+    if mod(i, b1_visual_sample_cnt) == 0
+        Rt = eskf.R.';
+        quiver_orig_x(j) = pos_enu(1);
+        quiver_orig_y(j) = pos_enu(2);
+        quiver_orig_z(j) = pos_enu(3);
+        quiver_b1_u(j) = Rt(2, 1);
+        quiver_b1_v(j) = Rt(1, 1);
+        quiver_b1_w(j) = -Rt(3, 1);
+        quiver_b2_u(j) = Rt(2, 2);
+        quiver_b2_v(j) = Rt(1, 2);
+        quiver_b2_w(j) = -Rt(3, 2);
+        quiver_b3_u(j) = Rt(2, 3);
+        quiver_b3_v(j) = Rt(1, 3);
+        quiver_b3_w(j) = -Rt(3, 3);
+        j = j + 1;
+    end
     
-    %accelerometer_norm_arr(i) = sqrt(accel_lpf_x(i) * accel_lpf_x(i) + ...
-    %                                 accel_lpf_y(i) * accel_lpf_y(i) + ...
-    %                                 accel_lpf_z(i) * accel_lpf_z(i));
+    accelerometer_norm_arr(i) = sqrt(accel_lpf_x(i) * accel_lpf_x(i) + ...
+                                     accel_lpf_y(i) * accel_lpf_y(i) + ...
+                                     accel_lpf_z(i) * accel_lpf_z(i));
                                  
-    %gravity_norm_arr(i) = sqrt(gravity(1) * gravity(1) + ...
-    %                           gravity(2) * gravity(2) + ...
-    %                           gravity(3) * gravity(3));
+    gravity_norm_arr(i) = sqrt(gravity(1) * gravity(1) + ...
+                               gravity(2) * gravity(2) + ...
+                               gravity(3) * gravity(3));
                            
     q = eskf.get_quaternion();
     euler_angles = eskf.quat_to_euler(q);
@@ -225,6 +226,50 @@ plot(timestamp_s, mag_raw_z);
 xlabel('time [s]');
 ylabel('mx [uT]');
 
+%gps position
+figure('Name', 'gps position (wgs84)');
+subplot (3, 1, 1);
+plot(timestamp_s, longitude);
+title('gps position (wgs84)');
+xlabel('time [s]');
+ylabel('longitude [deg]');
+subplot (3, 1, 2);
+plot(timestamp_s, latitude);
+xlabel('time [s]');
+ylabel('latitude [deg]');
+subplot (3, 1, 3);
+plot(timestamp_s, gps_height_msl);
+xlabel('time [s]');
+ylabel('height MSL [m]');
+
+%gps velocity
+figure('Name', 'gps velocity');
+subplot (3, 1, 1);
+plot(timestamp_s, gps_ned_vx);
+title('gps velocity');
+xlabel('time [s]');
+ylabel('vx [m/s]');
+subplot (3, 1, 2);
+plot(timestamp_s, gps_ned_vy);
+xlabel('time [s]');
+ylabel('my [m/s]');
+subplot (3, 1, 3);
+plot(timestamp_s, gps_ned_vz);
+xlabel('time [s]');
+ylabel('vz [m/s]');
+
+%barometer
+figure('Name', 'barometer');
+subplot (2, 1, 1);
+plot(timestamp_s, barometer_height);
+title('barometer');
+xlabel('time [s]');
+ylabel('z [m]');
+subplot (2, 1, 2);
+plot(timestamp_s, barometer_vz);
+xlabel('time [s]');
+ylabel('vz [m/s]');
+
 %estimated roll, pitch and yaw angle
 figure('Name', 'euler angles');
 subplot (3, 1, 1);
@@ -240,6 +285,124 @@ subplot (3, 1, 3);
 plot(timestamp_s, yaw);
 xlabel('time [s]');
 ylabel('yaw [deg]');
+
+%position in enu frame
+figure('Name', 'position (enu frame)');
+subplot (3, 1, 1);
+plot(timestamp_s, gps_enu_x);
+title('position (enu frame)');
+xlabel('time [s]');
+ylabel('x [m]');
+subplot (3, 1, 2);
+plot(timestamp_s, gps_enu_y);
+xlabel('time [s]');
+ylabel('y [m]');
+subplot (3, 1, 3);
+plot(timestamp_s, barometer_height);
+xlabel('time [s]');
+ylabel('z [m]');
+
+%fused velocity in enu frame
+figure('Name', 'fused velocity (enu frame)');
+grid on;
+subplot (3, 1, 1);
+hold on;
+plot(timestamp_s, gps_ned_vy);
+plot(timestamp_s, fused_enu_vx);
+title('fused velocity (enu frame)');
+legend('fused velocity', 'gps velocity') ;
+xlabel('time [s]');
+ylabel('vx [m/s]');
+subplot (3, 1, 2);
+hold on;
+plot(timestamp_s, gps_ned_vx);
+plot(timestamp_s, fused_enu_vy);
+xlabel('time [s]');
+ylabel('vy [m/s]');
+legend('fused velocity', 'gps velocity') ;
+subplot (3, 1, 3);
+hold on;
+plot(timestamp_s, barometer_vz);
+plot(timestamp_s, fused_enu_vz);
+legend('fused velocity', 'barometer velocity') ;
+xlabel('time [s]');
+ylabel('vz [m/s]');
+
+%accelerometer vs corrected gravity
+figure('Name', 'gravity');
+subplot (3, 1, 1);
+hold on;
+plot(timestamp_s, gravity_x_arr);
+plot(timestamp_s, -accel_lpf_x);
+title('gravity');
+xlabel('time [s]');
+ylabel('ax [m/s^2]');
+legend('measured', 'corrected');
+subplot (3, 1, 2);
+hold on;
+plot(timestamp_s, gravity_y_arr);
+plot(timestamp_s, -accel_lpf_y);
+xlabel('time [s]');
+ylabel('ay [m/s^2]');
+legend('measured', 'corrected');
+subplot (3, 1, 3);
+hold on;
+plot(timestamp_s, gravity_z_arr);
+plot(timestamp_s, -accel_lpf_z);
+xlabel('time [s]');
+ylabel('az [m/s^2]');
+legend('measured', 'corrected');
+
+%accelerometer norm vs corrected gravity norm
+figure('Name', 'gravity norm');
+hold on;
+plot(timestamp_s(2: data_num), accelerometer_norm_arr(2: data_num));
+plot(timestamp_s(2: data_num), gravity_norm_arr(2: data_num));
+title('gravity norm');
+xlabel('time [s]');
+ylabel('ax (m/s^2]');
+legend('measured', 'corrected');
+
+%2d position trajectory plot of x-y plane
+figure('Name', 'x-y position (enu frame)');
+grid on;
+hold on;
+plot(gps_enu_x, gps_enu_y, ...
+     'Color', 'k', ...
+     'Marker', 'o', ...
+     'LineStyle', 'None', ...
+     'MarkerSize', 3);
+plot(fused_enu_x, fused_enu_y, 'Color', 'r');
+legend('gps trajectory', 'fused trajectory') ;
+title('position (enu frame)');
+xlabel('x [m]');
+ylabel('y [m]');
+
+%3d visualization of position trajectory
+figure('Name', 'x-y-z position (enu frame)');
+hold on;
+axis equal;
+plot3(gps_enu_x, gps_enu_y, barometer_height, ...
+      'Color', 'k', ...
+      'Marker', 'o', ...
+      'LineStyle', 'None', ...
+      'MarkerSize', 2);
+plot3(fused_enu_x, fused_enu_y, fused_enu_z, 'Color', 'm');
+quiver3(quiver_orig_x,  quiver_orig_y,  quiver_orig_z, ...
+        quiver_b1_u,  quiver_b1_v,  quiver_b1_w, 'Color', 'r', 'AutoScaleFactor', 0.2);
+quiver3(quiver_orig_x,  quiver_orig_y,  quiver_orig_z, ...
+        quiver_b2_u,  quiver_b2_v,  quiver_b2_w, 'Color', 'g', 'AutoScaleFactor', 0.2);
+quiver3(quiver_orig_x,  quiver_orig_y,  quiver_orig_z, ...
+        quiver_b3_u,  quiver_b3_v,  quiver_b3_w, 'Color', 'b', 'AutoScaleFactor', 0.2);
+%legend('gps trajectory', 'b1 vector', 'b2 vector', 'b3 vector') 
+legend('gps trajectory', 'fused trajectory', 'b1 vector', 'b2 vector', 'b3 vector') 
+title('position (enu frame)');
+xlabel('x [m]');
+ylabel('y [m]');
+zlabel('z [m]');
+daspect([1 1 1])
+grid on
+view(-10,20);
 
 disp("Press any key to leave");
 pause;
