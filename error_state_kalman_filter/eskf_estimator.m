@@ -46,9 +46,9 @@ classdef eskf_estimator
                    0 0 7e-1];
                
         %observation covariance matrix of accelerometer
-        V_mag = [5 0 0;
-                 0 5 0;
-                 0 0 5];
+        V_mag = [2 0 0;
+                 0 2 0;
+                 0 0 2];
          
         I_3x3 = eye(3);
         I_4x4 = eye(4);
@@ -317,6 +317,7 @@ classdef eskf_estimator
                        0.5 * delta_theta_y;
                        0.5 * delta_theta_z];
             obj.x_nominal(1:4) = obj.quaternion_mult(obj.x_nominal(1:4), q_error);
+            obj.x_nominal(1:4) = obj.quat_normalize(obj.x_nominal(1:4));
             
             %error state reset
             %G = obj.I_3x3 - (0.5 * hat_map_3x3([delta_theta_x;
@@ -332,7 +333,7 @@ classdef eskf_estimator
         end
         
         function ret_obj = mag_correct(obj, mx, my, mz)
-            %normalize the magnetic field vector
+            %normalize magnetic field vector
             mag = [mx; my; mz];
             y = mag / norm(mag);
             
@@ -353,7 +354,7 @@ classdef eskf_estimator
             X_delta_x = Q_delte_theta;
             H_mag = H_x_mag * X_delta_x;
 
-            %prediction of gravity vector using gyroscope
+            %prediction of magnetic field vector using gyroscope
             h_mag = [q0*q0 + q1*q1 - q2*q2 - q3*q3;
                      2 * (q1*q2 - q0*q3);
                      2 * (q0*q2 + q1*q3)];
@@ -386,6 +387,7 @@ classdef eskf_estimator
                        0.5 * delta_theta_y;
                        0.5 * delta_theta_z];
             obj.x_nominal(1:4) = obj.quaternion_mult(obj.x_nominal(1:4), q_error);
+            obj.x_nominal(1:4) = obj.quat_normalize(obj.x_nominal(1:4));
             
             %error state reset
             %G = obj.I_3x3 - (0.5 * hat_map_3x3([delta_theta_x;
