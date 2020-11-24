@@ -36,9 +36,9 @@ classdef eskf_estimator
                0 0 1e-5];
         
         %process covariance matrix of error state
-        P = [1e-6 0 0;
-             0 1e-6 0;
-             0 0 1e-6];
+        P = [5 0 0;
+             0 5 0;
+             0 0 5];
         
         %observation covariance matrix of accelerometer
         V_accel = [7e-1 0 0;
@@ -46,9 +46,9 @@ classdef eskf_estimator
                    0 0 7e-1];
                
         %observation covariance matrix of accelerometer
-        V_mag = [2 0 0;
-                 0 2 0;
-                 0 0 2];
+        V_mag = [10 0 0;
+                 0 10 0;
+                 0 0 10];
          
         I_3x3 = eye(3);
         I_4x4 = eye(4);
