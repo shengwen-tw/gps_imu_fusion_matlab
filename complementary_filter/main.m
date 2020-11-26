@@ -1,5 +1,5 @@
 format long g
-csv = csvread("gps_imu_compass_barometer_log1.csv");
+csv = csvread("../dataset/dataset1.csv");
 
 %ms
 timestamp_ms = csv(:, 1);

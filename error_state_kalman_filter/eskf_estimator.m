@@ -354,7 +354,7 @@ classdef eskf_estimator
             %calculate kalman gain
             H_accel_t = H_accel.';
             PHt_accel = obj.P * H_accel_t;
-            K_accel = PHt_accel * inv(H_accel * PHt_accel + obj.V_accel);
+            K_accel = PHt_accel / (H_accel * PHt_accel + obj.V_accel);
             %disp(K_accel);
             
             %calculate error state residul
@@ -437,7 +437,7 @@ classdef eskf_estimator
             %calculate kalman gain
             H_mag_t = H_mag.';
             PHt_mag = obj.P * H_mag_t;
-            K_mag = PHt_mag * inv(H_mag * PHt_mag + obj.V_mag);
+            K_mag = PHt_mag / (H_mag * PHt_mag + obj.V_mag);
             %disp(K_mag);
             
             %calculate error state residul
@@ -529,7 +529,7 @@ classdef eskf_estimator
             %calculate kalman gain
             H_gps_t = H_gps.';
             PHt_gps = obj.P * H_gps_t;
-            K_gps = PHt_gps * inv(H_gps * PHt_gps + obj.V_gps);
+            K_gps = PHt_gps / (H_gps * PHt_gps + obj.V_gps);
             %disp(K_gps);
             
             %calculate error state residul
@@ -581,7 +581,7 @@ classdef eskf_estimator
             %calculate kalman gain
             H_height_t = H_height.';
             PHt_height = obj.P * H_height_t;
-            K_height = PHt_height * inv(H_height * PHt_height + obj.V_height);
+            K_height = PHt_height / (H_height * PHt_height + obj.V_height);
             %disp(K_height);
             
             %calculate error state residul
