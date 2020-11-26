@@ -367,17 +367,22 @@ classdef eskf_estimator
             delta_theta_x = obj.delta_x(7);
             delta_theta_y = obj.delta_x(8);
             delta_theta_z = obj.delta_x(9);
-            %delta_theta_norm = sqrt(delta_theta_x * delta_theta_x + ...
-            %                        delta_theta_y * delta_theta_y + ...
-            %                        delta_theta_z * delta_theta_z);
-            %q_error = [cos(delta_theta_norm / 2);
-            %           delta_theta_x;
-            %           delta_theta_y;
-            %           delta_theta_z];
-            q_error = [1;
-                       0.5 * delta_theta_x;
-                       0.5 * delta_theta_y;
-                       0.5 * delta_theta_z];
+            
+            if 1
+            	q_error = [1;
+            	           0.5 * delta_theta_x;
+                           0.5 * delta_theta_y;
+                           0.5 * delta_theta_z];
+            else
+                delta_theta_norm = sqrt(delta_theta_x * delta_theta_x + ...
+                                        delta_theta_y * delta_theta_y + ...
+                                        delta_theta_z * delta_theta_z);
+                q_error = [cos(delta_theta_norm / 2);
+                           delta_theta_x;
+                           delta_theta_y;
+                           delta_theta_z];
+            end
+            
             obj.x_nominal(7:10) = obj.quaternion_mult(obj.x_nominal(7:10), q_error);
             obj.x_nominal(7:10) = obj.quat_normalize(obj.x_nominal(7:10));
             
@@ -445,17 +450,22 @@ classdef eskf_estimator
             delta_theta_x = obj.delta_x(7);
             delta_theta_y = obj.delta_x(8);
             delta_theta_z = obj.delta_x(9);
-            %delta_theta_norm = sqrt(delta_theta_x * delta_theta_x + ...
-            %                        delta_theta_y * delta_theta_y + ...
-            %                        delta_theta_z * delta_theta_z);
-            %q_error = [cos(delta_theta_norm / 2);
-            %           delta_theta_x;
-            %           delta_theta_y;
-            %           delta_theta_z];
-            q_error = [1;
-                       0.5 * delta_theta_x;
-                       0.5 * delta_theta_y;
-                       0.5 * delta_theta_z];
+            
+            if 1
+            	q_error = [1;
+            	           0.5 * delta_theta_x;
+                           0.5 * delta_theta_y;
+                           0.5 * delta_theta_z];
+            else
+                delta_theta_norm = sqrt(delta_theta_x * delta_theta_x + ...
+                                        delta_theta_y * delta_theta_y + ...
+                                        delta_theta_z * delta_theta_z);
+                q_error = [cos(delta_theta_norm / 2);
+                           delta_theta_x;
+                           delta_theta_y;
+                           delta_theta_z];
+            end
+            
             obj.x_nominal(7:10) = obj.quaternion_mult(obj.x_nominal(7:10), q_error);
             obj.x_nominal(7:10) = obj.quat_normalize(obj.x_nominal(7:10));
             

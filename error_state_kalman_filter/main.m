@@ -122,7 +122,7 @@ for i = 2: data_num
     %eskf correction from height sensor
     eskf = eskf.height_correct(barometer_height(i), barometer_vz(i));
     
-    fused_enu_x(i) =  eskf.x_nominal(1);
+    fused_enu_x(i) = eskf.x_nominal(1);
     fused_enu_y(i) = eskf.x_nominal(2);
     fused_enu_z(i) = eskf.x_nominal(3);
     fused_enu_vx(i) = eskf.x_nominal(4);
