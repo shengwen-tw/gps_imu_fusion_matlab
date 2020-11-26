@@ -129,7 +129,7 @@ for i = 2: data_num
     fused_enu_vy(i) = ekf.x_a_posterior(5);
     fused_enu_vz(i) = ekf.x_a_posterior(6);
 
-    vel_ned_body = ekf.R.' * [fused_enu_vy(i); fused_enu_vx(i); -fused_enu_vz(i)];
+    vel_ned_body = ekf.R * [fused_enu_vy(i); fused_enu_vx(i); -fused_enu_vz(i)];
     
     %gps, barometer raw signal and transform it into enu frame for
     %visualization
