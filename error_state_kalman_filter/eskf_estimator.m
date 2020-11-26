@@ -203,7 +203,7 @@ classdef eskf_estimator
             %return the conjugated quaternion since we use the opposite convention compared to the paper
             %paper: quaternion of earth frame to body-fixed frame
             %us: quaternion of body-fixed frame to earth frame
-            quaternion = obj.x_nominal(1:4);
+            quaternion = obj.x_nominal(7:10);
             quaternion = obj.quaternion_conj(quaternion);
             %quaternion = obj.quaternion_mult(obj.q_inclination, quaternion);
         end
