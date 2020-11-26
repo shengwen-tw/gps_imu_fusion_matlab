@@ -95,13 +95,10 @@ for i = 2: data_num
     
     %eliminate body-fixed frame acceleration induced by rotation for
     %getting better gravity vector
-    %accel_translational = cross([gyro_raw_x(i); gyro_raw_y(i); gyro_raw_z(i)], vel_ned_body);
-    %gravity = [-accel_lpf_x(i) - accel_translational(1);
-    %           -accel_lpf_y(i) - accel_translational(2);
-    %           -accel_lpf_z(i) - accel_translational(3)];
-    gravity = [-accel_lpf_x(i);
-               -accel_lpf_y(i);
-               -accel_lpf_z(i)];
+    accel_translational = cross([gyro_raw_x(i); gyro_raw_y(i); gyro_raw_z(i)], vel_ned_body);
+    gravity = [-accel_lpf_x(i) - accel_translational(1);
+               -accel_lpf_y(i) - accel_translational(2);
+               -accel_lpf_z(i) - accel_translational(3)];
     
     gravity_x_arr(i) = gravity(1);
     gravity_y_arr(i) = gravity(2);
@@ -132,7 +129,7 @@ for i = 2: data_num
     fused_enu_vy(i) = eskf.x_nominal(5);
     fused_enu_vz(i) = eskf.x_nominal(6);
 
-    vel_ned_body = eskf.R.' * [fused_enu_vy(i); fused_enu_vx(i); -fused_enu_vz(i)];
+    vel_ned_body = eskf.R * [fused_enu_vy(i); fused_enu_vx(i); -fused_enu_vz(i)];
     
     %gps, barometer raw signal and transform it into enu frame for
     %visualization
