@@ -439,7 +439,7 @@ classdef ekf_estimator
             residual = K_gps * (y_gps - h_gps);
             residual(3) = 0;     %pz
             residual(6) = 0;     %vz
-            residual(7:10) = 0; %q0, q1, q2, q3
+            residual(7:10) = 0;  %q0, q1, q2, q3
             
             %a posterior estimation
             obj.x_a_posterior = obj.x_a_priori + residual;

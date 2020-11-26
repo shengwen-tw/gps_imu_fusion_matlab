@@ -382,10 +382,15 @@ classdef eskf_estimator
             obj.x_nominal(7:10) = obj.quat_normalize(obj.x_nominal(7:10));
             
             %error state reset
-            %G = obj.I_3x3 - (0.5 * hat_map_3x3([delta_theta_x;
-            %                                    delta_theta_y;
-            %                                    delta_theta_z]));
-            G = obj.I_9x9;
+            if 1
+                G = obj.I_9x9;
+                G(7:9, 7:9) = obj.I_3x3 - (0.5 * obj.hat_map_3x3([delta_theta_x;
+                                                                  delta_theta_y;
+                                                                  delta_theta_z]));
+            else
+                G = obj.I_9x9;
+            end
+            
             obj.P = G * obj.P * G.';
             
             %update rotation matrix for position estimation
@@ -455,10 +460,14 @@ classdef eskf_estimator
             obj.x_nominal(7:10) = obj.quat_normalize(obj.x_nominal(7:10));
             
             %error state reset
-            %G = obj.I_3x3 - (0.5 * hat_map_3x3([delta_theta_x;
-            %                                    delta_theta_y;
-            %                                    delta_theta_z]));
-            G = obj.I_9x9;
+            if 1
+                G = obj.I_9x9;
+                G(7:9, 7:9) = obj.I_3x3 - (0.5 * obj.hat_map_3x3([delta_theta_x;
+                                                                  delta_theta_y;
+                                                                  delta_theta_z]));
+            else
+                G = obj.I_9x9;
+            end
             obj.P = G * obj.P * G.';
             
             %update rotation matrix for position estimation
@@ -526,9 +535,6 @@ classdef eskf_estimator
             obj.x_nominal(5) = obj.x_nominal(5) + obj.delta_x(5);
             
             %error state reset
-            %G = obj.I_3x3 - (0.5 * hat_map_3x3([delta_theta_x;
-            %                                    delta_theta_y;
-            %                                    delta_theta_z]));
             G = obj.I_9x9;
             obj.P = G * obj.P * G.';
             
@@ -579,9 +585,6 @@ classdef eskf_estimator
             obj.x_nominal(6) = obj.x_nominal(6) + obj.delta_x(6);
             
             %error state reset
-            %G = obj.I_3x3 - (0.5 * hat_map_3x3([delta_theta_x;
-            %                                    delta_theta_y;
-            %                                    delta_theta_z]));
             G = obj.I_9x9;
             obj.P = G * obj.P * G.';
             
