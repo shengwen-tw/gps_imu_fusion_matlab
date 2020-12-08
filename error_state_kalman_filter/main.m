@@ -87,6 +87,8 @@ gravity_z_arr(1) = -accel_lpf_z(3);
 %accelerometer norm and corrected norm
 accelerometer_norm_arr = zeros(1, data_num);
 gravity_norm_arr = zeros(1, data_num);
+%process covariance matrix of error-state kalman filter
+eskf_P = zeros(10, data_num);
 
 vel_ned_body = [0; 0; 0];
                         
@@ -169,6 +171,17 @@ for i = 2: data_num
     roll(i) = euler_angles(1);
     pitch(i) = euler_angles(2);
     yaw(i) = euler_angles(3);
+    
+    %visualize process covariance matrix of extended kalman filter
+    eskf_P(1, i) = eskf.P(1, 1);
+    eskf_P(2, i) = eskf.P(2, 2);
+    eskf_P(3, i) = eskf.P(3, 3);
+    eskf_P(4, i) = eskf.P(4, 4);
+    eskf_P(5, i) = eskf.P(5, 5);
+    eskf_P(6, i) = eskf.P(6, 6);
+    eskf_P(7, i) = eskf.P(7, 7);
+    eskf_P(8, i) = eskf.P(8, 8);
+    eskf_P(9, i) = eskf.P(9, 9);
 end
 
 %%%%%%%%
@@ -359,6 +372,23 @@ title('gravity norm');
 xlabel('time [s]');
 ylabel('ax (m/s^2]');
 legend('measured', 'corrected');
+
+%process covariance matrix of extended kalman filter
+figure('Name', 'Process covariance matrix');
+hold on;
+plot(timestamp_s(2: data_num), eskf_P(1, 2: data_num));
+plot(timestamp_s(2: data_num), eskf_P(2, 2: data_num));
+plot(timestamp_s(2: data_num), eskf_P(3, 2: data_num));
+plot(timestamp_s(2: data_num), eskf_P(4, 2: data_num));
+plot(timestamp_s(2: data_num), eskf_P(5, 2: data_num));
+plot(timestamp_s(2: data_num), eskf_P(6, 2: data_num));
+plot(timestamp_s(2: data_num), eskf_P(7, 2: data_num));
+plot(timestamp_s(2: data_num), eskf_P(8, 2: data_num));
+plot(timestamp_s(2: data_num), eskf_P(9, 2: data_num));
+title('process covariance matrix');
+xlabel('time [s]');
+ylabel('P');
+legend('px', 'py', 'pz', 'vx', 'vy', 'vz', 'theta_x', 'theta_y', 'theta_z');
 
 %2d position trajectory plot of x-y plane
 figure('Name', 'x-y position (enu frame)');
