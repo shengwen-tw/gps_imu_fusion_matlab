@@ -322,9 +322,9 @@ classdef ekf_estimator
             q3 = obj.x_a_priori(10);
             
             %correction: acceleromater
-            H_accel = [0  0  0  0  0  0  -2*q2   2*q3  -2*q0  2*q1;
-                       0  0  0  0  0  0   2*q1   2*q0   2*q3  2*q2;
-                       0  0  0  0  0  0   2*q0  -2*q1  -2*q2  2*q3];
+            H_accel = [0 0 0 0 0 0  2*q2   2*q3   2*q0  2*q1;
+                         0 0 0 0 0 0 -2*q1  -2*q0   2*q3  2*q2;
+                         0 0 0 0 0 0  2*q0  -2*q1  -2*q2  2*q3];
             
             %calculate kalman gain
             H_accel_t = H_accel.';
@@ -333,8 +333,8 @@ classdef ekf_estimator
             %disp(K_accel);
             
             %prediction of gravity vector using gyroscope
-            h_accel = [2 * (q1*q3 - q0*q2);
-                       2 * (q0*q1 + q2*q3);
+            h_accel = [2 * (q0*q2 + q1*q3);
+                       2 * (q2*q3 - q0*q1);
                        q0*q0 - q1*q1 - q2*q2 + q3*q3];
                    
             %residual
@@ -367,10 +367,15 @@ classdef ekf_estimator
             q2 = obj.x_a_priori(9);
             q3 = obj.x_a_priori(10);
             
+            gamma = sqrt(mag(1)*mag(1) + mag(2)*mag(2));
+            
             %correction: acceleromater
-            H_mag = [0  0  0  0  0  0   2*q0  2*q1  -2*q2  -2*q3;
-                     0  0  0  0  0  0  -2*q3  2*q2   2*q1  -2*q0;
-                     0  0  0  0  0  0   2*q2  2*q3   2*q0   2*q1];
+            H_mag = [0 0 0 0 0 0 2*(+gamma*q0 + mag(3)*q2) 2*(+gamma*q1 + mag(3)*q3) 2*(-gamma*q2 + mag(3)*q0) ...
+                                   2*(-gamma*q3 + mag(3)*q1);
+                       0 0 0 0 0 0 2*(+gamma*q3 - mag(3)*q1) 2*(+gamma*q2 - mag(3)*q0) 2*(+gamma*q1 + mag(3)*q3) ...
+                                   2*(+gamma*q0 + mag(3)*q2);
+                       0 0 0 0 0 0 2*(-gamma*q2 + mag(3)*q0) 2*(+gamma*q3 - mag(3)*q1) 2*(-gamma*q0 - mag(3)*q2) ...
+                                   2*(+gamma*q1 + mag(3)*q3)];
             
             %calculate kalman gain
             H_mag_t = H_mag.';
@@ -379,9 +384,9 @@ classdef ekf_estimator
             %disp(K_mag);
             
             %prediction of magnetic field vector using gyroscope
-            h_mag = [q0*q0 + q1*q1 - q2*q2 - q3*q3;
-                     2 * (q1*q2 - q0*q3);
-                     2 * (q0*q2 + q1*q3)];
+            h_mag = [gamma*(q0*q0 + q1*q1 - q2*q2 - q3*q3) + 2*mag(3)*(q0*q2 + q1*q3);
+                     2*gamma*(q1*q2 + q0*q3) + 2*mag(3)*(q2*q3 - q0*q1);
+                     2*gamma*(q1*q3 - q0*q2) + mag(3)*(q0*q0 - q1*q1 - q2*q2 + q3*q3)];
                    
             %residual
             epsilon_mag = K_mag * (mag - h_mag);
