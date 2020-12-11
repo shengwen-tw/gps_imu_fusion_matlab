@@ -62,14 +62,14 @@ classdef eskf_estimator
              0 0 0 0 0 0 0 0 5]; %delta_z
         
         %observation covariance matrix of accelerometer
-        V_accel = [2e-1 0 0;  %ax
-                   0 2e-1 0;  %ay
-                   0 0 2e-1]; %az
+        V_accel = [7e-2 0 0;  %ax
+                   0 7e-2 0;  %ay
+                   0 0 7e-2]; %az
                
         %observation covariance matrix of accelerometer
-        V_mag = [6 0 0;  %mx
-                 0 6 0;  %my
-                 0 0 6]; %mz
+        V_mag = [10 0 0;  %mx
+                 0 10 0;  %my
+                 0 0 10]; %mz
              
         %observation covariance matrix of the gps sensor
         V_gps = [5e-5 0 0 0;  %px
@@ -332,9 +332,9 @@ classdef eskf_estimator
             q3 = obj.x_nominal(10);
             
             %error state observation matrix of accelerometer
-            H_x_accel = [0 0 0 0 0 0 -2*q2  2*q3  -2*q0  2*q1;
-                         0 0 0 0 0 0 2*q1   2*q0   2*q3  2*q2;
-                         0 0 0 0 0 0 2*q0  -2*q1  -2*q2  2*q3];
+            H_x_accel = [0 0 0 0 0 0  2*q2   2*q3   2*q0  2*q1;
+                         0 0 0 0 0 0 -2*q1  -2*q0   2*q3  2*q2;
+                         0 0 0 0 0 0  2*q0  -2*q1  -2*q2  2*q3];
                    
             Q_delte_theta = 0.5 * [-q1 -q2 -q3;
                                     q0 -q3  q2;
@@ -347,8 +347,8 @@ classdef eskf_estimator
             H_accel = H_x_accel * X_delta_x;
 
             %prediction of gravity vector using gyroscope
-            h_accel = [2 * (q1*q3 - q0*q2);
-                       2 * (q0*q1 + q2*q3);
+            h_accel = [2 * (q0*q2 + q1*q3);
+                       2 * (q2*q3 - q0*q1);
                        q0*q0 - q1*q1 - q2*q2 + q3*q3];
             
             %calculate kalman gain
@@ -414,10 +414,15 @@ classdef eskf_estimator
             q2 = obj.x_nominal(9);
             q3 = obj.x_nominal(10);
             
+            gamma = sqrt(mag(1)*mag(1) + mag(2)*mag(2));
+            
             %error state observation matrix of accelerometer
-            H_x_mag = [0 0 0 0 0 0  2*q0  2*q1  -2*q2  -2*q3;
-                       0 0 0 0 0 0 -2*q3  2*q2   2*q1  -2*q0;
-                       0 0 0 0 0 0  2*q2  2*q3   2*q0   2*q1];
+            H_x_mag = [0 0 0 0 0 0 2*(+gamma*q0 + mag(3)*q2) 2*(+gamma*q1 + mag(3)*q3) 2*(-gamma*q2 + mag(3)*q0) ...
+                                   2*(-gamma*q3 + mag(3)*q1);
+                       0 0 0 0 0 0 2*(+gamma*q3 - mag(3)*q1) 2*(+gamma*q2 - mag(3)*q0) 2*(+gamma*q1 + mag(3)*q3) ...
+                                   2*(+gamma*q0 + mag(3)*q2);
+                       0 0 0 0 0 0 2*(-gamma*q2 + mag(3)*q0) 2*(+gamma*q3 - mag(3)*q1) 2*(-gamma*q0 - mag(3)*q2) ...
+                                   2*(+gamma*q1 + mag(3)*q3)];
 
             Q_delte_theta = 0.5 * [-q1 -q2 -q3;
                                     q0 -q3  q2;
@@ -430,9 +435,9 @@ classdef eskf_estimator
             H_mag = H_x_mag * X_delta_x;
 
             %prediction of magnetic field vector using gyroscope
-            h_mag = [q0*q0 + q1*q1 - q2*q2 - q3*q3;
-                     2 * (q1*q2 - q0*q3);
-                     2 * (q0*q2 + q1*q3)];
+            h_mag = [gamma*(q0*q0 + q1*q1 - q2*q2 - q3*q3) + 2*mag(3)*(q0*q2 + q1*q3);
+                     2*gamma*(q1*q2 + q0*q3) + 2*mag(3)*(q2*q3 - q0*q1);
+                     2*gamma*(q1*q3 - q0*q2) + mag(3)*(q0*q0 - q1*q1 - q2*q2 + q3*q3)];
             
             %calculate kalman gain
             H_mag_t = H_mag.';
@@ -453,8 +458,8 @@ classdef eskf_estimator
             
             if 1
             	q_error = [1;
-            	           0.5 * delta_theta_x;
-                           0.5 * delta_theta_y;
+            	           0;
+                           0;
                            0.5 * delta_theta_z];
             else
                 delta_theta_norm = sqrt(delta_theta_x * delta_theta_x + ...
