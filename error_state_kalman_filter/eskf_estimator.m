@@ -74,8 +74,8 @@ classdef eskf_estimator
         %observation covariance matrix of the gps sensor
         V_gps = [5e-5 0 0 0;  %px
                  0 5e-5 0 0;  %py
-                 0 0 1e-4 0;   %vx
-                 0 0 0 1e-4];  %vy
+                 0 0 1e-1 0;   %vx
+                 0 0 0 1e-1];  %vy
              
         %%observation covariance matrix of the height sensor
         V_height = [1e-5 0;  %pz
@@ -270,10 +270,12 @@ classdef eskf_estimator
             a_inertial = obj.R.' * [ax; ay; az];
             
             %get translational acceleration from accelerometer
-            a = [-a_inertial(2);
-                 -a_inertial(1);
-                 -(a_inertial(3) + 9.8)];
+            a_ned = [-a_inertial(1);
+                     -a_inertial(2);
+                     -(a_inertial(3) + 9.8)];
             
+            a = [a_ned(2); a_ned(1); -a_ned(3)]; %NED to ENU
+             
             x_last = obj.x_nominal(1:3);
             v_last = obj.x_nominal(4:6);
             q_last = obj.x_nominal(7:10);
