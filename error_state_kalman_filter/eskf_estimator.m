@@ -74,8 +74,8 @@ classdef eskf_estimator
         %observation covariance matrix of the gps sensor
         V_gps = [5e-5 0 0 0;  %px
                  0 5e-5 0 0;  %py
-                 0 0 1e10 0;   %vx
-                 0 0 0 1e10];  %vy
+                 0 0 1e-4 0;   %vx
+                 0 0 0 1e-4];  %vy
              
         %%observation covariance matrix of the height sensor
         V_height = [1e-5 0;  %pz
