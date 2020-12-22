@@ -43,9 +43,9 @@ classdef eskf_estimator
         Theta_i = []; %white noise standard deviation of the gyroscope
         
         %covariance matrix of process white noise
-        Q_i = [1e-5 0 0 0 0 0;  %noise of ax
-               0 1e-5 0 0 0 0;  %noise of ay
-               0 0 1e-5 0 0 0;  %noise of az
+        Q_i = [1e-6 0 0 0 0 0;  %noise of ax
+               0 1e-6 0 0 0 0;  %noise of ay
+               0 0 1e-6 0 0 0;  %noise of az
                0 0 0 1e-5 0 0;  %noise of wx
                0 0 0 0 1e-5 0;  %noise of wy
                0 0 0 0 0 1e-5]; %noise of wz
@@ -270,9 +270,9 @@ classdef eskf_estimator
             a_inertial = obj.R.' * [ax; ay; az];
             
             %get translational acceleration from accelerometer
-            a_ned = [-a_inertial(1);
-                     -a_inertial(2);
-                     -(a_inertial(3) + 9.8)];
+            a_ned = [a_inertial(1);
+                     a_inertial(2);
+                     a_inertial(3) + 9.8];
             
             a = [a_ned(2); a_ned(1); -a_ned(3)]; %NED to ENU
              
