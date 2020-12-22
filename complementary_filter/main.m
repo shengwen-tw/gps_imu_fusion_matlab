@@ -122,7 +122,7 @@ for i = 2: data_num
     ins = ins.barometer_update(barometer_height(i), barometer_vz(i));
     
     %update x-y directional state from gps if new gps data is obtained
-    if (abs(gps_ned_vx(i) - gps_ned_vx(i - 1)) > 1e-4 && abs(gps_ned_vy(i) - gps_ned_vy(i - 1)) > 1e-4)
+    if (abs(gps_ned_vx(i) - gps_ned_vx(i - 1)) > 1e-2 || abs(gps_ned_vy(i) - gps_ned_vy(i - 1)) > 1e-2)
         ins = ins.gps_update(longitude(i), latitude(i), gps_ned_vx(i), gps_ned_vy(i));
     end
     
