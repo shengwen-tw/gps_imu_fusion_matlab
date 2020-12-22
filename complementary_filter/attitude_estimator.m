@@ -1,8 +1,5 @@
 classdef attitude_estimator
-    properties
-        inclination_angle = 0;
-        q_inclination = [1; 0; 0; 0];
-        
+    properties        
         q_last = [1; 0; 0; 0]
         q_estimate = [1; 0; 0; 0]
         
@@ -80,14 +77,6 @@ classdef attitude_estimator
                 q(3) = 0.0;
                 q(4) = sqrt_tmp / sqrt_2gamma;
             end
-        end
-        
-        function ret_obj = set_inclination_angle(obj, angle_degree)
-            obj.q_inclination = [cos(deg2rad(angle_degree * 0.5));
-                                 0;
-                                 0;
-                                 sin(deg2rad(angle_degree * 0.5))];
-            ret_obj = obj;
         end
         
         function R = prepare_body_to_earth_rotation_matrix(obj, q)
@@ -211,7 +200,6 @@ classdef attitude_estimator
             %paper: quaternion of earth frame to body-fixed frame
             %us: quaternion of body-fixed frame to earth frame
             obj.q_estimate = obj.quaternion_conj(obj.q_estimate);
-            obj.q_estimate = obj.quaternion_mult(obj.q_inclination, obj.q_estimate);
             euler_angles = obj.quat_to_euler(obj.q_estimate);
 
             obj.R = obj.quat_to_rotation_matrix(obj.q_estimate);
