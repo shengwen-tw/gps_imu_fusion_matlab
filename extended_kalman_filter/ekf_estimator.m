@@ -46,16 +46,16 @@ classdef ekf_estimator
              0 0 0 0 0 0 0 0 0 3]; %q3
         
         %prediction covariance matrix
-        Q = [1e-4 0 0 0 0 0 0 0 0 0;  %px
-             0 1e-4 0 0 0 0 0 0 0 0;  %py
-             0 0 1e-4 0 0 0 0 0 0 0;  %pz
-             0 0 0 1e-4 0 0 0 0 0 0;  %vx
-             0 0 0 0 1e-4 0 0 0 0 0;  %vy
-             0 0 0 0 0 1e-4 0 0 0 0;  %vz
-             0 0 0 0 0 0 1e-6 0 0 0;  %q0
-             0 0 0 0 0 0 0 1e-6 0 0;  %q1
-             0 0 0 0 0 0 0 0 1e-6 0;  %q2
-             0 0 0 0 0 0 0 0 0 1e-6]; %q3
+        Q = [1e-5 0 0 0 0 0 0 0 0 0;  %px
+             0 1e-5 0 0 0 0 0 0 0 0;  %py
+             0 0 1e-5 0 0 0 0 0 0 0;  %pz
+             0 0 0 1e-5 0 0 0 0 0 0;  %vx
+             0 0 0 0 1e-5 0 0 0 0 0;  %vy
+             0 0 0 0 0 1e-5 0 0 0 0;  %vz
+             0 0 0 0 0 0 1e-5 0 0 0;  %q0
+             0 0 0 0 0 0 0 1e-5 0 0;  %q1
+             0 0 0 0 0 0 0 0 1e-5 0;  %q2
+             0 0 0 0 0 0 0 0 0 1e-5]; %q3
          
        %observation covariance matrix of the acceleromter
         R_accel = [5e-1 0 0
@@ -68,14 +68,14 @@ classdef ekf_estimator
                  0 0 10];
 
         %observation covariance matrix of the gps sensor
-        R_gps = [0.75e-2 0 0 0;  %px
-                 0 0.75e-2 0 0;  %py
-                 0 0 1.2e-2 0;   %vx
-                 0 0 0 1.2e-2];  %vy
+        R_gps = [5e-5 0 0 0;  %px
+                 0 5e-5 0 0;  %py
+                 0 0 1e-4 0;   %vx
+                 0 0 0 1e-4];  %vy
         
         %%observation covariance matrix of the height sensor
-        R_height = [1e-2 0;  %pz
-                    0 1e-2]; %vz
+        R_height = [1e-5 0;  %pz
+                    0 1e-3]; %vz
         
         %rotation matrix of current attitude
         R = [1 0 0;
@@ -254,7 +254,7 @@ classdef ekf_estimator
             dy = ecef_now_y - obj.home_ecef_y;
             dz = ecef_now_z - obj.home_ecef_z;
 
-            enu_pos = R * [-dx; -dy; -dz];
+            enu_pos = R * [dx; dy; dz];
         end
         
         function ret_obj = predict(obj, ax, ay, az, wx, wy, wz, dt)
@@ -264,10 +264,12 @@ classdef ekf_estimator
             a_inertial = obj.R.' * [ax; ay; az];
             
             %get translational acceleration from accelerometer
-            a = [-a_inertial(2);
-                 -a_inertial(1);
-                 -(a_inertial(3) + 9.8)];
-             
+            a_ned = [-a_inertial(1);
+                     -a_inertial(2);
+                     -(a_inertial(3) + 9.8)];
+                 
+            a = [a_ned(2); a_ned(1); -a_ned(3)]; %NED to ENU
+            
             x_last = obj.x_a_posterior(1:3);
             v_last = obj.x_a_posterior(4:6);
             q_last = obj.x_a_posterior(7:10);
@@ -323,8 +325,8 @@ classdef ekf_estimator
             
             %correction: acceleromater
             H_accel = [0 0 0 0 0 0  2*q2   2*q3   2*q0  2*q1;
-                         0 0 0 0 0 0 -2*q1  -2*q0   2*q3  2*q2;
-                         0 0 0 0 0 0  2*q0  -2*q1  -2*q2  2*q3];
+                       0 0 0 0 0 0 -2*q1  -2*q0   2*q3  2*q2;
+                       0 0 0 0 0 0  2*q0  -2*q1  -2*q2  2*q3];
             
             %calculate kalman gain
             H_accel_t = H_accel.';

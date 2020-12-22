@@ -117,7 +117,7 @@ for i = 2: data_num
     ekf = ekf.mag_correct(mag_raw_x(i), mag_raw_y(i), mag_raw_z(i));
     
     %ekf correction from gps sensor
-    if (abs(gps_ned_vx(i) - gps_ned_vx(i - 1)) > 1e-4 && abs(gps_ned_vy(i) - gps_ned_vy(i - 1)) > 1e-4)
+    if (abs(gps_ned_vx(i) - gps_ned_vx(i - 1)) > 1e-2 || abs(gps_ned_vy(i) - gps_ned_vy(i - 1)) > 1e-2)
         ekf = ekf.gps_correct(longitude(i), latitude(i), gps_ned_vx(i), gps_ned_vy(i));
     end
     
