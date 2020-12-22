@@ -40,8 +40,6 @@ ekf = ekf_estimator;
 %set home position
 home_longitude = 120.9971619;
 home_latitude = 24.7861614;
-inclination_angle = -23.5;
-ekf = ekf.set_inclination_angle(inclination_angle);
 ekf = ekf.set_home_longitude_latitude(home_longitude, home_latitude, 0);
 
 %record datas

@@ -6,9 +6,6 @@ classdef ekf_estimator
         home_ecef_y = 0;
         home_ecef_z = 0;
         
-        inclination_angle = 0;
-        q_inclination = [1; 0; 0; 0];
-        
         %prediction a priori state
         x_a_priori = [0; %px
                       0;  %py
@@ -46,9 +43,9 @@ classdef ekf_estimator
              0 0 0 0 0 0 0 0 0 3]; %q3
         
         %prediction covariance matrix
-        Q = [1e-5 0 0 0 0 0 0 0 0 0;  %px
-             0 1e-5 0 0 0 0 0 0 0 0;  %py
-             0 0 1e-5 0 0 0 0 0 0 0;  %pz
+        Q = [1e-6 0 0 0 0 0 0 0 0 0;  %px
+             0 1e-6 0 0 0 0 0 0 0 0;  %py
+             0 0 1e-6 0 0 0 0 0 0 0;  %pz
              0 0 0 1e-6 0 0 0 0 0 0;  %vx
              0 0 0 0 1e-6 0 0 0 0 0;  %vy
              0 0 0 0 0 1e-6 0 0 0 0;  %vz
@@ -113,14 +110,6 @@ classdef ekf_estimator
                      q(2) * div_q_norm;
                      q(3) * div_q_norm;
                      q(4) * div_q_norm];
-        end
-        
-        function ret_obj = set_inclination_angle(obj, angle_degree)
-            obj.q_inclination = [cos(deg2rad(angle_degree * 0.5));
-                                 0;
-                                 0;
-                                 sin(deg2rad(angle_degree * 0.5))];
-            ret_obj = obj;
         end
         
         function R = prepare_body_to_earth_rotation_matrix(obj, q)

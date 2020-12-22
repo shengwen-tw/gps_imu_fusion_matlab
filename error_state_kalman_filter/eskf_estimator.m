@@ -8,9 +8,6 @@ classdef eskf_estimator
         home_ecef_y = 0;
         home_ecef_z = 0;
         
-        inclination_angle = 0;
-        q_inclination = [1; 0; 0; 0];
-        
         %nomnial state
         x_nominal = [0;  %px
                      0;  %py
@@ -109,15 +106,7 @@ classdef eskf_estimator
                      q(3) * div_q_norm;
                      q(4) * div_q_norm];
         end
-        
-        function ret_obj = set_inclination_angle(obj, angle_degree)
-            obj.q_inclination = [cos(deg2rad(angle_degree * 0.5));
-                                 0;
-                                 0;
-                                 sin(deg2rad(angle_degree * 0.5))];
-            ret_obj = obj;
-        end
-        
+
         function R = prepare_body_to_earth_rotation_matrix(obj, q)
             q0q0 = q(1) * q(1);
             q1q1 = q(2) * q(2);
