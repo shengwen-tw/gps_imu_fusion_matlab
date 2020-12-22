@@ -309,7 +309,7 @@ hold on;
 plot(timestamp_s, gps_ned_vy);
 plot(timestamp_s, fused_enu_vx);
 title('fused velocity (enu frame)');
-legend('fused velocity', 'gps velocity') ;
+legend('gps velocity', 'eskf velocity') ;
 xlabel('time [s]');
 ylabel('vx [m/s]');
 subplot (3, 1, 2);
@@ -318,12 +318,12 @@ plot(timestamp_s, gps_ned_vx);
 plot(timestamp_s, fused_enu_vy);
 xlabel('time [s]');
 ylabel('vy [m/s]');
-legend('fused velocity', 'gps velocity') ;
+legend('gps velocity', 'eskf velocity') ;
 subplot (3, 1, 3);
 hold on;
 plot(timestamp_s, barometer_vz);
 plot(timestamp_s, fused_enu_vz);
-legend('fused velocity', 'barometer velocity') ;
+legend('barometer velocity', 'eskf velocity') ;
 xlabel('time [s]');
 ylabel('vz [m/s]');
 
@@ -361,6 +361,32 @@ title('gravity norm');
 xlabel('time [s]');
 ylabel('ax (m/s^2]');
 legend('measured', 'corrected');
+
+%raw position vs fused position
+figure('Name', 'raw position and fused position (enu frame)');
+grid on;
+subplot (3, 1, 1);
+hold on;
+plot(timestamp_s, gps_enu_x);
+plot(timestamp_s, fused_enu_x);
+title('raw position and fused position (enu frame)');
+legend('gps x', 'eskf x') ;
+xlabel('time [s]');
+ylabel('x [m]');
+subplot (3, 1, 2);
+hold on;
+plot(timestamp_s, gps_enu_y);
+plot(timestamp_s, fused_enu_y);
+xlabel('time [s]');
+ylabel('y [m]');
+legend('gps y', 'eskf y') ;
+subplot (3, 1, 3);
+hold on;
+plot(timestamp_s, barometer_height);
+plot(timestamp_s, fused_enu_z);
+legend('barometer z', 'eskf z') ;
+xlabel('time [s]');
+ylabel('z [m]');
 
 %2d position trajectory plot of x-y plane
 figure('Name', 'x-y position (enu frame)');
