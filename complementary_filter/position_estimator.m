@@ -88,9 +88,9 @@ classdef position_estimator
         function ret_obj = state_predict(obj, R_body_to_earth, accel_b_x, accel_b_y, accel_b_z, dt)            
             accel_i = R_body_to_earth * [accel_b_x; accel_b_y; accel_b_z];
             
-            accel_i_x = -accel_i(2);
-            accel_i_y = -accel_i(1);
-            accel_i_z = -(accel_i(3) + 9.8);
+            accel_i_x = accel_i(2);
+            accel_i_y = accel_i(1);
+            accel_i_z = accel_i(3) + 9.8;
             
             obj.fused_enu_vx = obj.fused_enu_vx + (accel_i_x * dt);
             obj.fused_enu_vy = obj.fused_enu_vy + (accel_i_y * dt);
