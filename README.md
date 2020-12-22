@@ -6,7 +6,7 @@ Simulation of quadrotor state estimation using **Complementary Filter**, **Exten
 
 ## Dataset
 
-The CSV file is consist of the sensor measurements from **accelerometer**, **gyroscope**, **magnetometer**, **gps receiver** and **barometer**
+The CSV file consists of the sensor measurements from **accelerometer**, **gyroscope**, **magnetometer**, **gps receiver** and **barometer**.
 
 ## Run simulation
 
