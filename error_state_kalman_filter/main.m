@@ -21,8 +21,8 @@ latitude = csv(:, 12);
 %m
 gps_height_msl = csv(:, 13);
 %m/s
-gps_ned_vx = -csv(:, 14); %FIXME
-gps_ned_vy = -csv(:, 15); %FIXME
+gps_ned_vx = csv(:, 14);
+gps_ned_vy = csv(:, 15);
 gps_ned_vz = csv(:, 16);
 %m
 barometer_height = csv(:, 17);

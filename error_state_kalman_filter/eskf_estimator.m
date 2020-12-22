@@ -261,7 +261,7 @@ classdef eskf_estimator
             dy = ecef_now_y - obj.home_ecef_y;
             dz = ecef_now_z - obj.home_ecef_z;
 
-            enu_pos = R * [-dx; -dy; -dz];
+            enu_pos = R * [dx; dy; dz];
         end
         
         function ret_obj = predict(obj, ax, ay, az, wx, wy, wz, dt)
