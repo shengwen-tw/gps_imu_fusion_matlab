@@ -49,9 +49,9 @@ classdef ekf_estimator
         Q = [1e-5 0 0 0 0 0 0 0 0 0;  %px
              0 1e-5 0 0 0 0 0 0 0 0;  %py
              0 0 1e-5 0 0 0 0 0 0 0;  %pz
-             0 0 0 1e-5 0 0 0 0 0 0;  %vx
-             0 0 0 0 1e-5 0 0 0 0 0;  %vy
-             0 0 0 0 0 1e-5 0 0 0 0;  %vz
+             0 0 0 1e-6 0 0 0 0 0 0;  %vx
+             0 0 0 0 1e-6 0 0 0 0 0;  %vy
+             0 0 0 0 0 1e-6 0 0 0 0;  %vz
              0 0 0 0 0 0 1e-5 0 0 0;  %q0
              0 0 0 0 0 0 0 1e-5 0 0;  %q1
              0 0 0 0 0 0 0 0 1e-5 0;  %q2
@@ -264,9 +264,9 @@ classdef ekf_estimator
             a_inertial = obj.R.' * [ax; ay; az];
             
             %get translational acceleration from accelerometer
-            a_ned = [-a_inertial(1);
-                     -a_inertial(2);
-                     -(a_inertial(3) + 9.8)];
+            a_ned = [a_inertial(1);
+                     a_inertial(2);
+                     a_inertial(3) + 9.8];
                  
             a = [a_ned(2); a_ned(1); -a_ned(3)]; %NED to ENU
             
@@ -289,13 +289,13 @@ classdef ekf_estimator
             obj.x_a_priori = [x_last(1) + (v_last(1) * dt) + (a(1) * half_dt_squared); %px
                               x_last(2) + (v_last(2) * dt) + (a(2) * half_dt_squared); %py
                               x_last(3) + (v_last(3) * dt) + (a(3) * half_dt_squared); %pz
-                              v_last(1) + (ax * dt); %vx
-                              v_last(2) + (ay * dt); %vy
-                              v_last(3) + (az * dt); %vz
-                              q_integration(1);      %q0
-                              q_integration(2);      %q1
-                              q_integration(3);      %q2
-                              q_integration(4)];     %q3
+                              v_last(1) + (a(1) * dt); %vx
+                              v_last(2) + (a(2) * dt); %vy
+                              v_last(3) + (a(3) * dt); %vz
+                              q_integration(1);        %q0
+                              q_integration(2);        %q1
+                              q_integration(3);        %q2
+                              q_integration(4)];       %q3
             
             Omega = obj.I_4x4 + (0.5 * dt *...
                     [0   -wx  -wy  -wz;

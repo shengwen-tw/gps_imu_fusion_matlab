@@ -392,6 +392,32 @@ xlabel('time [s]');
 ylabel('P');
 legend('px', 'py', 'pz', 'vx', 'vy', 'vz', 'q0', 'q1', 'q2', 'q3');
 
+%raw position vs fused position
+figure('Name', 'raw position and fused position (enu frame)');
+grid on;
+subplot (3, 1, 1);
+hold on;
+plot(timestamp_s, gps_enu_x);
+plot(timestamp_s, fused_enu_x);
+title('raw position and fused position (enu frame)');
+legend('gps x', 'ekf x') ;
+xlabel('time [s]');
+ylabel('x [m]');
+subplot (3, 1, 2);
+hold on;
+plot(timestamp_s, gps_enu_y);
+plot(timestamp_s, fused_enu_y);
+xlabel('time [s]');
+ylabel('y [m]');
+legend('gps y', 'ekf y') ;
+subplot (3, 1, 3);
+hold on;
+plot(timestamp_s, barometer_height);
+plot(timestamp_s, fused_enu_z);
+legend('barometer z', 'ekf z') ;
+xlabel('time [s]');
+ylabel('z [m]');
+
 %2d position trajectory plot of x-y plane
 figure('Name', 'x-y position (enu frame)');
 grid on;
