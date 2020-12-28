@@ -1,5 +1,7 @@
 pkg load symbolic
 
+disp('start symbolic deriviation...')
+
 %loop period time
 syms dt
 
@@ -272,19 +274,27 @@ P_post_mag = (eye(9) - K_mag*H_mag) * P_prior_mag;
 % save derivation result %
 %========================%
 
+disp('stage1 code generation start...')
+
 codegen = codegen_stage1;
 
 %prediction
-codegen.format_derived_result(P_prior)
+codegen = codegen.open_file('predict.stage1.txt');
+codegen.format_derived_result('P_prior', P_prior)
+codegen.close_file();
 
 %accelerometer correction
-codegen.format_derived_result(PHt_accel)
-codegen.format_derived_result(HPHt_V_accel)
-codegen.format_derived_result(delta_x_accel)
-codegen.format_derived_result(P_post_accel)
+codegen = codegen.open_file('accelerometer_correct.stage1.txt');
+codegen.format_derived_result('PHt_accel', PHt_accel)
+codegen.format_derived_result('HPHt_V_accel', HPHt_V_accel)
+codegen.format_derived_result('delta_x_accel', delta_x_accel)
+codegen.format_derived_result('P_post_accel', P_post_accel)
+codegen.close_file();
 
 %magnetometer correction
-codegen.format_derived_result(PHt_mag)
-codegen.format_derived_result(HPHt_V_mag)
-codegen.format_derived_result(delta_x_mag)
-codegen.format_derived_result(P_post_mag)
+codegen = codegen.open_file('magnetometer_correct.stage1.txt');
+codegen.format_derived_result('PHt_mag', PHt_mag)
+codegen.format_derived_result('HPHt_V_mag', HPHt_V_mag)
+codegen.format_derived_result('delta_x_mag', delta_x_mag)
+codegen.format_derived_result('P_post_mag', P_post_mag)
+codegen.close_file();
