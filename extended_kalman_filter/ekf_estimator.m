@@ -6,9 +6,6 @@ classdef ekf_estimator
         home_ecef_y = 0;
         home_ecef_z = 0;
         
-        inclination_angle = 0;
-        q_inclination = [1; 0; 0; 0];
-        
         %prediction a priori state
         x_a_priori = [0; %px
                       0;  %py
@@ -46,16 +43,16 @@ classdef ekf_estimator
              0 0 0 0 0 0 0 0 0 3]; %q3
         
         %prediction covariance matrix
-        Q = [1e-4 0 0 0 0 0 0 0 0 0;  %px
-             0 1e-4 0 0 0 0 0 0 0 0;  %py
-             0 0 1e-4 0 0 0 0 0 0 0;  %pz
-             0 0 0 1e-4 0 0 0 0 0 0;  %vx
-             0 0 0 0 1e-4 0 0 0 0 0;  %vy
-             0 0 0 0 0 1e-4 0 0 0 0;  %vz
-             0 0 0 0 0 0 1e-6 0 0 0;  %q0
-             0 0 0 0 0 0 0 1e-6 0 0;  %q1
-             0 0 0 0 0 0 0 0 1e-6 0;  %q2
-             0 0 0 0 0 0 0 0 0 1e-6]; %q3
+        Q = [1e-6 0 0 0 0 0 0 0 0 0;  %px
+             0 1e-6 0 0 0 0 0 0 0 0;  %py
+             0 0 1e-6 0 0 0 0 0 0 0;  %pz
+             0 0 0 1e-6 0 0 0 0 0 0;  %vx
+             0 0 0 0 1e-6 0 0 0 0 0;  %vy
+             0 0 0 0 0 1e-6 0 0 0 0;  %vz
+             0 0 0 0 0 0 1e-5 0 0 0;  %q0
+             0 0 0 0 0 0 0 1e-5 0 0;  %q1
+             0 0 0 0 0 0 0 0 1e-5 0;  %q2
+             0 0 0 0 0 0 0 0 0 1e-5]; %q3
          
        %observation covariance matrix of the acceleromter
         R_accel = [5e-1 0 0
@@ -68,14 +65,14 @@ classdef ekf_estimator
                  0 0 10];
 
         %observation covariance matrix of the gps sensor
-        R_gps = [0.75e-2 0 0 0;  %px
-                 0 0.75e-2 0 0;  %py
-                 0 0 1.2e-2 0;   %vx
-                 0 0 0 1.2e-2];  %vy
+        R_gps = [5e-5 0 0 0;  %px
+                 0 5e-5 0 0;  %py
+                 0 0 1e-4 0;   %vx
+                 0 0 0 1e-4];  %vy
         
         %%observation covariance matrix of the height sensor
-        R_height = [1e-2 0;  %pz
-                    0 1e-2]; %vz
+        R_height = [1e-5 0;  %pz
+                    0 1e-3]; %vz
         
         %rotation matrix of current attitude
         R = [1 0 0;
@@ -113,14 +110,6 @@ classdef ekf_estimator
                      q(2) * div_q_norm;
                      q(3) * div_q_norm;
                      q(4) * div_q_norm];
-        end
-        
-        function ret_obj = set_inclination_angle(obj, angle_degree)
-            obj.q_inclination = [cos(deg2rad(angle_degree * 0.5));
-                                 0;
-                                 0;
-                                 sin(deg2rad(angle_degree * 0.5))];
-            ret_obj = obj;
         end
         
         function R = prepare_body_to_earth_rotation_matrix(obj, q)
@@ -254,7 +243,7 @@ classdef ekf_estimator
             dy = ecef_now_y - obj.home_ecef_y;
             dz = ecef_now_z - obj.home_ecef_z;
 
-            enu_pos = R * [-dx; -dy; -dz];
+            enu_pos = R * [dx; dy; dz];
         end
         
         function ret_obj = predict(obj, ax, ay, az, wx, wy, wz, dt)
@@ -264,10 +253,12 @@ classdef ekf_estimator
             a_inertial = obj.R.' * [ax; ay; az];
             
             %get translational acceleration from accelerometer
-            a = [-a_inertial(2);
-                 -a_inertial(1);
-                 -(a_inertial(3) + 9.8)];
-             
+            a_ned = [a_inertial(1);
+                     a_inertial(2);
+                     a_inertial(3) + 9.8];
+                 
+            a = [a_ned(2); a_ned(1); -a_ned(3)]; %NED to ENU
+            
             x_last = obj.x_a_posterior(1:3);
             v_last = obj.x_a_posterior(4:6);
             q_last = obj.x_a_posterior(7:10);
@@ -287,13 +278,13 @@ classdef ekf_estimator
             obj.x_a_priori = [x_last(1) + (v_last(1) * dt) + (a(1) * half_dt_squared); %px
                               x_last(2) + (v_last(2) * dt) + (a(2) * half_dt_squared); %py
                               x_last(3) + (v_last(3) * dt) + (a(3) * half_dt_squared); %pz
-                              v_last(1) + (ax * dt); %vx
-                              v_last(2) + (ay * dt); %vy
-                              v_last(3) + (az * dt); %vz
-                              q_integration(1);      %q0
-                              q_integration(2);      %q1
-                              q_integration(3);      %q2
-                              q_integration(4)];     %q3
+                              v_last(1) + (a(1) * dt); %vx
+                              v_last(2) + (a(2) * dt); %vy
+                              v_last(3) + (a(3) * dt); %vz
+                              q_integration(1);        %q0
+                              q_integration(2);        %q1
+                              q_integration(3);        %q2
+                              q_integration(4)];       %q3
             
             Omega = obj.I_4x4 + (0.5 * dt *...
                     [0   -wx  -wy  -wz;
@@ -322,9 +313,9 @@ classdef ekf_estimator
             q3 = obj.x_a_priori(10);
             
             %correction: acceleromater
-            H_accel = [0  0  0  0  0  0  -2*q2   2*q3  -2*q0  2*q1;
-                       0  0  0  0  0  0   2*q1   2*q0   2*q3  2*q2;
-                       0  0  0  0  0  0   2*q0  -2*q1  -2*q2  2*q3];
+            H_accel = [0 0 0 0 0 0  2*q2   2*q3   2*q0  2*q1;
+                       0 0 0 0 0 0 -2*q1  -2*q0   2*q3  2*q2;
+                       0 0 0 0 0 0  2*q0  -2*q1  -2*q2  2*q3];
             
             %calculate kalman gain
             H_accel_t = H_accel.';
@@ -333,8 +324,8 @@ classdef ekf_estimator
             %disp(K_accel);
             
             %prediction of gravity vector using gyroscope
-            h_accel = [2 * (q1*q3 - q0*q2);
-                       2 * (q0*q1 + q2*q3);
+            h_accel = [2 * (q0*q2 + q1*q3);
+                       2 * (q2*q3 - q0*q1);
                        q0*q0 - q1*q1 - q2*q2 + q3*q3];
                    
             %residual
@@ -367,10 +358,15 @@ classdef ekf_estimator
             q2 = obj.x_a_priori(9);
             q3 = obj.x_a_priori(10);
             
+            gamma = sqrt(mag(1)*mag(1) + mag(2)*mag(2));
+            
             %correction: acceleromater
-            H_mag = [0  0  0  0  0  0   2*q0  2*q1  -2*q2  -2*q3;
-                     0  0  0  0  0  0  -2*q3  2*q2   2*q1  -2*q0;
-                     0  0  0  0  0  0   2*q2  2*q3   2*q0   2*q1];
+            H_mag = [0 0 0 0 0 0 2*(+gamma*q0 + mag(3)*q2) 2*(+gamma*q1 + mag(3)*q3) 2*(-gamma*q2 + mag(3)*q0) ...
+                                   2*(-gamma*q3 + mag(3)*q1);
+                       0 0 0 0 0 0 2*(+gamma*q3 - mag(3)*q1) 2*(+gamma*q2 - mag(3)*q0) 2*(+gamma*q1 + mag(3)*q3) ...
+                                   2*(+gamma*q0 + mag(3)*q2);
+                       0 0 0 0 0 0 2*(-gamma*q2 + mag(3)*q0) 2*(+gamma*q3 - mag(3)*q1) 2*(-gamma*q0 - mag(3)*q2) ...
+                                   2*(+gamma*q1 + mag(3)*q3)];
             
             %calculate kalman gain
             H_mag_t = H_mag.';
@@ -379,9 +375,9 @@ classdef ekf_estimator
             %disp(K_mag);
             
             %prediction of magnetic field vector using gyroscope
-            h_mag = [q0*q0 + q1*q1 - q2*q2 - q3*q3;
-                     2 * (q1*q2 - q0*q3);
-                     2 * (q0*q2 + q1*q3)];
+            h_mag = [gamma*(q0*q0 + q1*q1 - q2*q2 - q3*q3) + 2*mag(3)*(q0*q2 + q1*q3);
+                     2*gamma*(q1*q2 + q0*q3) + 2*mag(3)*(q2*q3 - q0*q1);
+                     2*gamma*(q1*q3 - q0*q2) + mag(3)*(q0*q0 - q1*q1 - q2*q2 + q3*q3)];
                    
             %residual
             epsilon_mag = K_mag * (mag - h_mag);
@@ -439,7 +435,7 @@ classdef ekf_estimator
             residual = K_gps * (y_gps - h_gps);
             residual(3) = 0;     %pz
             residual(6) = 0;     %vz
-            residual(7:10) = 0; %q0, q1, q2, q3
+            residual(7:10) = 0;  %q0, q1, q2, q3
             
             %a posterior estimation
             obj.x_a_posterior = obj.x_a_priori + residual;

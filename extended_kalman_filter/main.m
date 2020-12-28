@@ -1,5 +1,5 @@
 format long g
-csv = csvread("gps_imu_compass_barometer_log1.csv");
+csv = csvread("../dataset/dataset1.csv");
 
 %ms
 timestamp_ms = csv(:, 1);
@@ -40,8 +40,6 @@ ekf = ekf_estimator;
 %set home position
 home_longitude = 120.9971619;
 home_latitude = 24.7861614;
-inclination_angle = -23.5;
-ekf = ekf.set_inclination_angle(inclination_angle);
 ekf = ekf.set_home_longitude_latitude(home_longitude, home_latitude, 0);
 
 %record datas
@@ -87,6 +85,8 @@ gravity_z_arr(1) = -accel_lpf_z(3);
 %accelerometer norm and corrected norm
 accelerometer_norm_arr = zeros(1, data_num);
 gravity_norm_arr = zeros(1, data_num);
+%process covariance matrix of extended kalman filter
+ekf_P = zeros(10, data_num);
 
 vel_ned_body = [0; 0; 0];
                         
@@ -115,7 +115,7 @@ for i = 2: data_num
     ekf = ekf.mag_correct(mag_raw_x(i), mag_raw_y(i), mag_raw_z(i));
     
     %ekf correction from gps sensor
-    if (abs(gps_ned_vx(i) - gps_ned_vx(i - 1)) > 1e-4 && abs(gps_ned_vy(i) - gps_ned_vy(i - 1)) > 1e-4)
+    if (abs(gps_ned_vx(i) - gps_ned_vx(i - 1)) > 1e-2 || abs(gps_ned_vy(i) - gps_ned_vy(i - 1)) > 1e-2)
         ekf = ekf.gps_correct(longitude(i), latitude(i), gps_ned_vx(i), gps_ned_vy(i));
     end
     
@@ -129,7 +129,7 @@ for i = 2: data_num
     fused_enu_vy(i) = ekf.x_a_posterior(5);
     fused_enu_vz(i) = ekf.x_a_posterior(6);
 
-    vel_ned_body = ekf.R.' * [fused_enu_vy(i); fused_enu_vx(i); -fused_enu_vz(i)];
+    vel_ned_body = ekf.R * [fused_enu_vy(i); fused_enu_vx(i); -fused_enu_vz(i)];
     
     %gps, barometer raw signal and transform it into enu frame for
     %visualization
@@ -169,6 +169,18 @@ for i = 2: data_num
     roll(i) = euler_angles(1);
     pitch(i) = euler_angles(2);
     yaw(i) = euler_angles(3);
+    
+    %visualize process covariance matrix of extended kalman filter
+    ekf_P(1, i) = ekf.P(1, 1);
+    ekf_P(2, i) = ekf.P(2, 2);
+    ekf_P(3, i) = ekf.P(3, 3);
+    ekf_P(4, i) = ekf.P(4, 4);
+    ekf_P(5, i) = ekf.P(5, 5);
+    ekf_P(6, i) = ekf.P(6, 6);
+    ekf_P(7, i) = ekf.P(7, 7);
+    ekf_P(8, i) = ekf.P(8, 8);
+    ekf_P(9, i) = ekf.P(9, 9);
+    ekf_P(10, i) = ekf.P(10, 10);
 end
 
 %%%%%%%%
@@ -359,6 +371,50 @@ title('gravity norm');
 xlabel('time [s]');
 ylabel('ax (m/s^2]');
 legend('measured', 'corrected');
+
+%process covariance matrix of extended kalman filter
+figure('Name', 'Process covariance matrix');
+hold on;
+plot(timestamp_s(2: data_num), ekf_P(1, 2: data_num));
+plot(timestamp_s(2: data_num), ekf_P(2, 2: data_num));
+plot(timestamp_s(2: data_num), ekf_P(3, 2: data_num));
+plot(timestamp_s(2: data_num), ekf_P(4, 2: data_num));
+plot(timestamp_s(2: data_num), ekf_P(5, 2: data_num));
+plot(timestamp_s(2: data_num), ekf_P(6, 2: data_num));
+plot(timestamp_s(2: data_num), ekf_P(7, 2: data_num));
+plot(timestamp_s(2: data_num), ekf_P(8, 2: data_num));
+plot(timestamp_s(2: data_num), ekf_P(9, 2: data_num));
+plot(timestamp_s(2: data_num), ekf_P(10, 2: data_num));
+title('process covariance matrix');
+xlabel('time [s]');
+ylabel('P');
+legend('px', 'py', 'pz', 'vx', 'vy', 'vz', 'q0', 'q1', 'q2', 'q3');
+
+%raw position vs fused position
+figure('Name', 'raw position and fused position (enu frame)');
+grid on;
+subplot (3, 1, 1);
+hold on;
+plot(timestamp_s, gps_enu_x);
+plot(timestamp_s, fused_enu_x);
+title('raw position and fused position (enu frame)');
+legend('gps x', 'ekf x') ;
+xlabel('time [s]');
+ylabel('x [m]');
+subplot (3, 1, 2);
+hold on;
+plot(timestamp_s, gps_enu_y);
+plot(timestamp_s, fused_enu_y);
+xlabel('time [s]');
+ylabel('y [m]');
+legend('gps y', 'ekf y') ;
+subplot (3, 1, 3);
+hold on;
+plot(timestamp_s, barometer_height);
+plot(timestamp_s, fused_enu_z);
+legend('barometer z', 'ekf z') ;
+xlabel('time [s]');
+ylabel('z [m]');
 
 %2d position trajectory plot of x-y plane
 figure('Name', 'x-y position (enu frame)');

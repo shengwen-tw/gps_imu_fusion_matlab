@@ -69,7 +69,7 @@ classdef position_estimator
             dy = ecef_now_y - obj.home_ecef_y;
             dz = ecef_now_z - obj.home_ecef_z;
 
-            enu_pos = R * [-dx; -dy; -dz];
+            enu_pos = R * [dx; dy; dz];
         end
         
         function ret_obj = filter_state_init(obj, longitude, latitude, height_ams, ...
@@ -88,9 +88,9 @@ classdef position_estimator
         function ret_obj = state_predict(obj, R_body_to_earth, accel_b_x, accel_b_y, accel_b_z, dt)            
             accel_i = R_body_to_earth * [accel_b_x; accel_b_y; accel_b_z];
             
-            accel_i_x = -accel_i(2);
-            accel_i_y = -accel_i(1);
-            accel_i_z = -(accel_i(3) + 9.8);
+            accel_i_x = accel_i(2);
+            accel_i_y = accel_i(1);
+            accel_i_z = accel_i(3) + 9.8;
             
             obj.fused_enu_vx = obj.fused_enu_vx + (accel_i_x * dt);
             obj.fused_enu_vy = obj.fused_enu_vy + (accel_i_y * dt);
@@ -128,10 +128,10 @@ classdef position_estimator
         end
         
         function ret_obj = barometer_update(obj, height_ref, vz_ref)
-            weight_barometer_vel = 0.01;
+            weight_barometer_vel = 0.05;
             obj.fused_enu_vz = (1 - weight_barometer_vel) * obj.fused_enu_vz + weight_barometer_vel * vz_ref;
             
-            weight_barometer_height = 0.01;
+            weight_barometer_height = 0.05;
             obj.fused_enu_z = (1 - weight_barometer_height) * obj.fused_enu_z + weight_barometer_height * height_ref;
             
             ret_obj = obj;
