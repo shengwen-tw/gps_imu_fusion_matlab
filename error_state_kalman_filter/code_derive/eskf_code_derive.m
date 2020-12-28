@@ -190,7 +190,7 @@ K_accel = [[K_accel00 K_accel01 K_accel02];
            [K_accel80 K_accel81 K_accel82]];
 
 %error state innovation
-delta_x_mag = K_accel * resid_accel;
+delta_x_accel = K_accel * resid_accel;
 
 %a posteriori covariance matrix update
 P_prior_accel = ...
@@ -252,7 +252,7 @@ K_mag = [[K_mag00 K_mag01 K_mag02];
          [K_mag80 K_mag81 K_mag82]];
 
 %error state innovation
-delta_x_mag = K_mag * resid_mag
+delta_x_mag = K_mag * resid_mag;
 
 %a posteriori covariance matrix update
 P_prior_mag = ...
@@ -271,3 +271,18 @@ P_post_mag = (eye(9) - K_mag*H_mag) * P_prior_mag;
 %========================%
 % save derivation result %
 %========================%
+
+%prediction
+format_derived_result(P_prior)
+
+%accelerometer correction
+format_derived_result(PHt_accel)
+format_derived_result(HPHt_V_accel)
+format_derived_result(delta_x_accel)
+format_derived_result(P_post_accel)
+
+%magnetometer correction
+format_derived_result(PHt_mag)
+format_derived_result(HPHt_V_mag)
+format_derived_result(delta_x_mag)
+format_derived_result(P_post_mag)
