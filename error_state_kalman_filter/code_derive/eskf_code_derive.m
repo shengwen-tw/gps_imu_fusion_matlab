@@ -272,17 +272,19 @@ P_post_mag = (eye(9) - K_mag*H_mag) * P_prior_mag;
 % save derivation result %
 %========================%
 
+codegen = codegen_stage1;
+
 %prediction
-format_derived_result(P_prior)
+codegen.format_derived_result(P_prior)
 
 %accelerometer correction
-format_derived_result(PHt_accel)
-format_derived_result(HPHt_V_accel)
-format_derived_result(delta_x_accel)
-format_derived_result(P_post_accel)
+codegen.format_derived_result(PHt_accel)
+codegen.format_derived_result(HPHt_V_accel)
+codegen.format_derived_result(delta_x_accel)
+codegen.format_derived_result(P_post_accel)
 
 %magnetometer correction
-format_derived_result(PHt_mag)
-format_derived_result(HPHt_V_mag)
-format_derived_result(delta_x_mag)
-format_derived_result(P_post_mag)
+codegen.format_derived_result(PHt_mag)
+codegen.format_derived_result(HPHt_V_mag)
+codegen.format_derived_result(delta_x_mag)
+codegen.format_derived_result(P_post_mag)
