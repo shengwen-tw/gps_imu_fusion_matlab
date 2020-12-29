@@ -1,5 +1,3 @@
-pkg load symbolic
-
 disp('start symbolic deriviation...')
 
 %loop period time

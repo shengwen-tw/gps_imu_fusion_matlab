@@ -15,16 +15,16 @@ classdef codegen_stage1
 	end
 
 	function format_derived_result(obj, prompt_str, mat)
-		pkg load symbolic
-
 		%simplify the symbolic deriviation result
 		mat = simplify(mat);
 
 		[row, column] = size(mat);
 
+		%[r, sigma] = subexpr(mat)
+
 		for r = 1:row
 			for c = 1:column
-				if mat(r, c) != 0
+				if isequal(mat(r, c), sym('0')) == 0
 					str = sprintf('%s(%d, %d) = %s;\n', prompt_str, ...
 	                                               r - 1, c - 1, char(mat(r, c)));
 					fprintf(obj.fid, str);
