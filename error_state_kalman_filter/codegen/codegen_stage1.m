@@ -25,7 +25,7 @@ classdef codegen_stage1
 		for r = 1:row
 			for c = 1:column
 				if mat(r, c) != 0
-					str = sprintf('%s(%d, %d) = %s\n', prompt_str, ...
+					str = sprintf('%s(%d, %d) = %s;\n', prompt_str, ...
 	                                               r - 1, c - 1, char(mat(r, c)));
 					fprintf(obj.fid, str);
 					%disp(str);
