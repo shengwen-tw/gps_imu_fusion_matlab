@@ -19,17 +19,21 @@ classdef codegen_stage1
 
 		complete = 0;
 		index = 1;
-		max_iter = 10;
+		max_iter = 100;
 		complete = 0;
 		old_expr = expr;
+		common = [];
 
 		while complete == 0
 			%common variable name (string)
 			common_var_name_str = ['common', num2str(index)];
 
 			%factor out common expression
-			[new_sub_expr, common(index)] = ...
+			%[new_sub_expr, common(index)] = ...
+			[new_sub_expr, new_common] = ...
 				subexpr(old_expr, common_var_name_str);
+
+			common = [common; new_common];
 
 			%exit if no more common factor
 			if isequal(new_sub_expr, old_expr) == 1
@@ -54,29 +58,32 @@ classdef codegen_stage1
 		mat = simplify(mat);
 
 		%factor out common expressions
-		%[optimized_derivation, common_expr] = obj.optimize_deriviation(mat);
+		[optimized_mat, common_vars] = obj.optimize_deriviation(mat);
 
-		%disp(optimized_derivation);
-		%disp(common_expr);
+		%disp(optimized_mat);
+		%disp(common_vars);
 
 		%save common expressions
-		%[row, column] = size(common_expr);
-		%for i = 1:row
-		%	str = sprintf('common[%d] = %s;\n', ...
-		%		      i - 1, char(common_expr(i)));
-		%	fprintf(obj.fid, str);
-		%end
+		[row, column] = size(common_vars);
+		for i = 1:row
+			str = sprintf('float common%d = %s;\n', ...
+				      i - 1, char(common_vars(i, 1)));
+			fprintf(obj.fid, str);
+			%disp(str);
+		end
 
-		%fprintf(obj.fid, "\n");
+		fprintf(obj.fid, "\n");
 
 		%save non-common expressions
-		[row, column] = size(mat);
+		[row, column] = size(optimized_mat);
 
 		for r = 1:row
 			for c = 1:column
-				if isequal(mat(r, c), sym('0')) == 0
-					str = sprintf('%s(%d, %d) = %s;\n', prompt_str, ...
-	                                               r - 1, c - 1, char(mat(r, c)));
+				if isequal(optimized_mat(r, c), sym('0')) == 0
+					str = sprintf('%s(%d, %d) = %s;\n', ...
+						      prompt_str, r - 1, c - 1, ...
+						      char(optimized_mat(r, c)));
+
 					fprintf(obj.fid, str);
 					%disp(str);
 				end
