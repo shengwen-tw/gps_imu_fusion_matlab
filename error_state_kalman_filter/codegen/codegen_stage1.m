@@ -14,11 +14,13 @@ classdef codegen_stage1
 		fclose(obj.fid);
 	end
 
-	function [optimized_expr, common_factors] = optimize_deriviation(obj, expr)
+	function [iters, optimized_expr, common_factors] = ...
+		 optimize_deriviation(obj, expr, prefix)
+
 		syms new_sub_expr old_expr
 
 		complete = 0;
-		index = 1;
+		index = 0;
 		max_iter = 100;
 		complete = 0;
 		old_expr = expr;
@@ -26,10 +28,9 @@ classdef codegen_stage1
 
 		while complete == 0
 			%common variable name (string)
-			common_var_name_str = ['common', num2str(index)];
+			common_var_name_str = ['c', num2str(index), prefix]
 
 			%factor out common expression
-			%[new_sub_expr, common(index)] = ...
 			[new_sub_expr, new_common] = ...
 				subexpr(old_expr, common_var_name_str);
 
@@ -44,11 +45,12 @@ classdef codegen_stage1
 
 			index = index + 1;
 
-			if index == max_iter
+			if index == (max_iter - 1)
 				complete = 1;
 			end
 		end
 
+		iters = index;
 		optimized_expr = new_sub_expr;
 		common_factors = common;
 	end
@@ -58,15 +60,30 @@ classdef codegen_stage1
 		mat = simplify(mat);
 
 		%factor out common expressions
-		[optimized_mat, common_vars] = obj.optimize_deriviation(mat);
+		[iters, optimized_mat, common_vars] = obj.optimize_deriviation(mat, '');
 
+		%optimize common expressions
+		c_prefix = '_';
+		while iters > 1
+			[iters, optimized_common_vars, factors_of_common] = ...
+				obj.optimize_deriviation(common_vars, c_prefix);
+
+			common_vars = [factors_of_common; optimized_common_vars];
+
+			if iters > 1
+				c_prefix = append('_', c_prefix)
+			end
+			%disp(iters);
+		end
+
+		%disp(iters);
 		%disp(optimized_mat);
 		%disp(common_vars);
 
 		%save common expressions
 		[row, column] = size(common_vars);
 		for i = 1:row
-			str = sprintf('float common%d = %s;\n', ...
+			str = sprintf('float c%d = %s;\n', ...
 				      i - 1, char(common_vars(i, 1)));
 			fprintf(obj.fid, str);
 			%disp(str);
@@ -80,9 +97,11 @@ classdef codegen_stage1
 		for r = 1:row
 			for c = 1:column
 				if isequal(optimized_mat(r, c), sym('0')) == 0
-					str = sprintf('%s(%d, %d) = %s;\n', ...
-						      prompt_str, r - 1, c - 1, ...
-						      char(optimized_mat(r, c)));
+					matlab_ccode = char(ccode(optimized_mat(r, c)));
+					my_ccode = strrep(matlab_ccode, '   t0 =', '');
+
+					str = sprintf('%s(%d, %d) = %s\n', ...
+						      prompt_str, r - 1, c - 1, my_ccode);
 
 					fprintf(obj.fid, str);
 					%disp(str);
