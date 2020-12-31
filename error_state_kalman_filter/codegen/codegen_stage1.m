@@ -1,9 +1,35 @@
 classdef codegen_stage1
 	properties
 		fid
+		mat_symbol_list = {}
+		mat_symbol_size = 0
 	end
 
 	methods
+
+	function ret_obj = preload_mat_symbol(obj, symbol_name, row, column)
+		obj.mat_symbol_size = obj.mat_symbol_size + 1;
+		obj.mat_symbol_list(obj.mat_symbol_size, :) = {symbol_name, [row, column]};
+		%celldisp(obj.mat_symbol_list{obj.mat_symbol_size});
+		ret_obj = obj;
+	end
+
+	function formatted_str = format_matrix_indexing(obj, orig_str)
+		symbol_list_size = size(obj.mat_symbol_list);
+		%celldisp(obj.mat_symbol_list)
+
+		for i = 1:symbol_list_size(1)
+			mat_name = obj.mat_symbol_list{i, 1};
+
+			dim = obj.mat_symbol_list{i, 2};
+			row = dim(1);
+			column = dim(2);
+
+			%disp(mat_name);
+			%disp(row);
+			%disp(column);
+		end
+	end
 
 	function ret_obj = open_file(obj, filename)
 		obj.fid = fopen(filename, 'w');
@@ -127,6 +153,9 @@ classdef codegen_stage1
 				my_ccode = strrep(matlab_ccode, '  t0 =', '');
 
 				str = sprintf('float c%d%s =%s\n', i - 1, c_suffix, my_ccode);
+
+				obj.format_matrix_indexing(str);
+
 				fprintf(obj.fid, str);
 				%disp(str);
 			end
@@ -151,6 +180,8 @@ classdef codegen_stage1
 
 					str = sprintf('%s(%d, %d) =%s\n', ...
 						      prompt_str, r - 1, c - 1, my_ccode);
+
+					obj.format_matrix_indexing(str);
 
 					fprintf(obj.fid, str);
 					%disp(str);
