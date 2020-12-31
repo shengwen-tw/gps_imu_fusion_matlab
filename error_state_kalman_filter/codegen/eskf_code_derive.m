@@ -272,6 +272,8 @@ P_post_mag = (eye(9) - K_mag*H_mag) * P_prior_mag;
 % save derivation result %
 %========================%
 
+tic();
+
 disp('stage1 code generation start...')
 
 codegen = codegen_stage1;
@@ -296,3 +298,5 @@ codegen.format_derived_result('HPHt_V_mag', HPHt_V_mag)
 codegen.format_derived_result('delta_x_mag', delta_x_mag)
 codegen.format_derived_result('P_post_mag', P_post_mag)
 codegen.close_file();
+
+toc();
