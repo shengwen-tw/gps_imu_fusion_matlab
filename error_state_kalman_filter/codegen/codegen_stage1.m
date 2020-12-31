@@ -72,7 +72,7 @@ classdef codegen_stage1
 		disp('optimize common factors');
 		further_optimize = 0;
 		optimized_commons = {};
-		index = 0;
+		depth = 0;
 		c_suffix = '_';
 		complete = 0;
 		while complete == 0
@@ -83,15 +83,20 @@ classdef codegen_stage1
 
 			if iters > 1
 				further_optimize = 1;
-				index = index + 1;
+				depth = depth + 1;
 
 				common_vars = factors_of_common;
-				optimized_commons{index} = optimized_common_vars;
+				optimized_commons{depth} = optimized_common_vars;
 
 				c_suffix = append('_', c_suffix);
 			end
 
 			if iters == 1
+				if depth > 0
+					depth = depth + 1;
+					optimized_commons{depth} = optimized_common_vars;
+				end
+
 				complete = 1;
 			end
 
@@ -107,7 +112,7 @@ classdef codegen_stage1
 		% common factors cannot be further optimized %
 		%============================================%
 		disp('common factors cannot be further optimized');
-		if index == 0
+		if depth == 0
 			[row, column] = size(common_vars);
 			
 			for i = 1:row
@@ -125,21 +130,21 @@ classdef codegen_stage1
 		% common factors can be further optimized %
 		%=========================================%
 		disp('common factors can be further optimized')
-		while index >= 1
-			%disp(index);
+		while depth >= 1
+			%disp(depth);
 
 			c_suffix = '';
-			suffix_cnt = index;
+			suffix_cnt = depth - 1;
 			while suffix_cnt >= 1
 				c_suffix = ['_', c_suffix];
 				suffix_cnt = suffix_cnt - 1;
 			end
 
 			%save common expressions
-			[row, column] = size(optimized_commons{index});
+			[row, column] = size(optimized_commons{depth});
 
 			for i = 1:row
-				matlab_ccode = char(ccode(optimized_commons{index}(i, 1)));
+				matlab_ccode = char(ccode(optimized_commons{depth}(i, 1)));
 				my_ccode = strrep(matlab_ccode, '  t0 =', '');
 
 				str = sprintf('float c%d%s =%s\n', i - 1, c_suffix, my_ccode);
@@ -148,24 +153,9 @@ classdef codegen_stage1
 			end
 			fprintf(obj.fid, "\n");
 
-			index = index - 1;
+			depth = depth - 1;
 		end
 
-		%save simplified common factor expressions
-		if further_optimize == 1 
-			[row, column] = size(optimized_common_vars);
-			
-			for i = 1:row
-				matlab_ccode = char(ccode(optimized_common_vars(i, 1)));
-				my_ccode = strrep(matlab_ccode, '  t0 =', '');
-
-				str = sprintf('float c%d =%s\n', i - 1, my_ccode);
-				fprintf(obj.fid, str);
-				%disp(str);
-			end
-			fprintf(obj.fid, "\n");
-		end
-	
 		%====================================%
 		% save non-common factor expressions %
 		%====================================%
