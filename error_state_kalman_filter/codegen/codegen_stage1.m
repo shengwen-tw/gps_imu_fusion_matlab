@@ -56,83 +56,61 @@ classdef codegen_stage1
 	end
 
 	function format_derived_result(obj, prompt_str, mat)
-		%================================%
-		% derived symbols simplification %
-		%================================%
-
 		%simplify the symbolic deriviation result
 		mat = simplify(mat);
 
-		%factor out common expressions
+		%=============================================================%
+		% factor out common expressions and get optimized expressions %
+		%=============================================================%
+		disp('factor out common expressions from input matrix');
 		[iters, optimized_mat, common_vars] = obj.optimize_deriviation(mat, '');
+		%disp(optimized_mat);
+		%disp(common_vars);
 
-		%=========================%
-		% optimize common factors %
-		%=========================%
-		disp('optimize common factors');
-		further_optimize = 0;
+		%====================================%
+		% optimize common factor expressions %
+		%====================================%
+		disp('optimize common expressions');
+		old_common_vars = common_vars;
 		optimized_commons = {};
 		depth = 0;
 		c_suffix = '_';
 		complete = 0;
 		while complete == 0
-			%iteratively factor out common factors
+			depth = depth + 1;
 
+			%iteratively factor out common expression
 			[iters, optimized_common_vars, factors_of_common] = ...
-				obj.optimize_deriviation(common_vars, c_suffix);
+				obj.optimize_deriviation(old_common_vars, c_suffix);
 
+			%append current optimized result to the last of the matlab cell
+			optimized_commons{depth} = optimized_common_vars;
+
+			%prepare for next iteration
+			old_common_vars = factors_of_common;
+
+			%accumulate suffix symbol '_' when new common variable is found
 			if iters > 1
-				further_optimize = 1;
-				depth = depth + 1;
-
-				common_vars = factors_of_common;
-				optimized_commons{depth} = optimized_common_vars;
-
 				c_suffix = append('_', c_suffix);
 			end
 
+			%no more common factor exists, stop the loop
 			if iters == 1
-				if depth > 0
-					depth = depth + 1;
-					optimized_commons{depth} = optimized_common_vars;
-				end
-
 				complete = 1;
 			end
-
-			%disp(iters);
 		end
 
 		%celldisp(optimized_commons);
-		%disp(iters);
-		%disp(optimized_mat);
-		%disp(common_vars);
 
-		%============================================%
-		% common factors cannot be further optimized %
-		%============================================%
-		disp('common factors cannot be further optimized');
-		if depth == 0
-			[row, column] = size(common_vars);
-			
-			for i = 1:row
-				matlab_ccode = char(ccode(common_vars(i, 1)));
-				my_ccode = strrep(matlab_ccode, '  t0 =', '');
-
-				str = sprintf('float c%d =%s\n', i - 1, my_ccode);
-				fprintf(obj.fid, str);
-				%disp(str);
-			end
-			fprintf(obj.fid, "\n");
-		end
-
-		%=========================================%
-		% common factors can be further optimized %
-		%=========================================%
-		disp('common factors can be further optimized')
+		%================%
+		% common factors %
+		%================%
+		disp('save common factors');
 		while depth >= 1
 			%disp(depth);
 
+			%generate suffix of the common variable name according to
+			%the depth size
 			c_suffix = '';
 			suffix_cnt = depth - 1;
 			while suffix_cnt >= 1
@@ -140,9 +118,10 @@ classdef codegen_stage1
 				suffix_cnt = suffix_cnt - 1;
 			end
 
-			%save common expressions
+			%get list size (row majoring, column is always 1)
 			[row, column] = size(optimized_commons{depth});
 
+			%formatting and save the expression iteratively in c style
 			for i = 1:row
 				matlab_ccode = char(ccode(optimized_commons{depth}(i, 1)));
 				my_ccode = strrep(matlab_ccode, '  t0 =', '');
@@ -156,14 +135,16 @@ classdef codegen_stage1
 			depth = depth - 1;
 		end
 
-		%====================================%
-		% save non-common factor expressions %
-		%====================================%
-		disp('save non-common factor expressions');
+		%===============================%
+		% non-common factor expressions %
+		%===============================%
+		disp('save optimized expressions');
 		[row, column] = size(optimized_mat);
 
+		%formatting and save the matrix iteratively in c style
 		for r = 1:row
 			for c = 1:column
+				%only save non-zero terms
 				if isequal(optimized_mat(r, c), sym('0')) == 0
 					matlab_ccode = char(ccode(optimized_mat(r, c)));
 					my_ccode = strrep(matlab_ccode, '  t0 =', '');
