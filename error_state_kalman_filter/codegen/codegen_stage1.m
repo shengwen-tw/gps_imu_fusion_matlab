@@ -14,21 +14,39 @@ classdef codegen_stage1
 		ret_obj = obj;
 	end
 
-	function formatted_str = format_matrix_indexing(obj, orig_str)
+	function formatted_str = format_matrix_indexing(obj, unformatted_str)
 		symbol_list_size = size(obj.mat_symbol_list);
 		%celldisp(obj.mat_symbol_list)
 
 		for i = 1:symbol_list_size(1)
-			mat_name = obj.mat_symbol_list{i, 1};
-
 			dim = obj.mat_symbol_list{i, 2};
 			row = dim(1);
 			column = dim(2);
-
-			%disp(mat_name);
 			%disp(row);
 			%disp(column);
+
+			%string replacement
+			mat_name = obj.mat_symbol_list{i, 1};
+
+			%disp(mat_name);
+			for r = 1:(row)
+				for c = 1:(column)
+					r_str = num2str(r-1);
+					c_str = num2str(c-1);
+
+					orig_str = ...
+						[mat_name, r_str, c_str];
+					replace_str = ...
+						[mat_name, '(', r_str, ',', c_str, ')'];
+
+					unformatted_str = ...
+						strrep(unformatted_str ,orig_str, replace_str);
+					%disp(unformatted_str);
+				end
+			end
 		end
+
+		formatted_str = unformatted_str;
 	end
 
 	function ret_obj = open_file(obj, filename)
@@ -88,7 +106,7 @@ classdef codegen_stage1
 		%=============================================================%
 		% factor out common expressions and get optimized expressions %
 		%=============================================================%
-		disp('factor out common expressions from input matrix');
+		%disp('factor out common expressions from input matrix');
 		[iters, optimized_mat, common_vars] = obj.optimize_deriviation(mat, '');
 		%disp(optimized_mat);
 		%disp(common_vars);
@@ -96,7 +114,7 @@ classdef codegen_stage1
 		%====================================%
 		% optimize common factor expressions %
 		%====================================%
-		disp('optimize common expressions');
+		%disp('optimize common expressions');
 		old_common_vars = common_vars;
 		optimized_commons = {};
 		depth = 0;
@@ -131,7 +149,7 @@ classdef codegen_stage1
 		%================%
 		% common factors %
 		%================%
-		disp('save common factors');
+		%disp('save common factors');
 		while depth >= 1
 			%disp(depth);
 
@@ -154,7 +172,7 @@ classdef codegen_stage1
 
 				str = sprintf('float c%d%s =%s\n', i - 1, c_suffix, my_ccode);
 
-				obj.format_matrix_indexing(str);
+				str = obj.format_matrix_indexing(str);
 
 				fprintf(obj.fid, str);
 				%disp(str);
@@ -167,7 +185,7 @@ classdef codegen_stage1
 		%===============================%
 		% non-common factor expressions %
 		%===============================%
-		disp('save optimized expressions');
+		%disp('save optimized expressions');
 		[row, column] = size(optimized_mat);
 
 		%formatting and save the matrix iteratively in c style
@@ -181,7 +199,7 @@ classdef codegen_stage1
 					str = sprintf('%s(%d, %d) =%s\n', ...
 						      prompt_str, r - 1, c - 1, my_ccode);
 
-					obj.format_matrix_indexing(str);
+					str = obj.format_matrix_indexing(str);
 
 					fprintf(obj.fid, str);
 					%disp(str);
