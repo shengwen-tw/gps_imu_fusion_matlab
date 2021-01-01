@@ -292,25 +292,48 @@ tic();
 
 disp('stage1 code generation start...')
 
-%prediction
-codegen = codegen.open_file('predict.txt');
+%============%
+% prediction %
+%============%
+codegen = codegen.open_file('predict.c');
+
+codegen.add_c_comment('/* calculate a priori process covariance matrix */');
 codegen.format_derived_result('P_prior', P_prior)
+
 codegen.close_file();
 
-%accelerometer correction
-codegen = codegen.open_file('accelerometer_correct.txt');
+%==========================%
+% accelerometer correction %
+%==========================%
+codegen = codegen.open_file('accelerometer_correct.c');
+
+codegen.add_c_comment('/* calculate kalman gain subterm P * transpose(H) */');
 codegen.format_derived_result('PHt_accel', PHt_accel)
-codegen.format_derived_result('HPHt_V_accel', HPHt_V_accel)
+%codegen.format_derived_result('HPHt_V_accel', HPHt_V_accel)
+
+codegen.add_c_comment('/* calculate error state residual */');
 codegen.format_derived_result('delta_x_accel', delta_x_accel)
+
+codegen.add_c_comment('/* calculate a posteriori process covariance matrix */');
 codegen.format_derived_result('P_post_accel', P_post_accel)
+
 codegen.close_file();
 
-%magnetometer correction
-codegen = codegen.open_file('magnetometer_correct.txt');
+%=========================%
+% magnetometer correction %
+%=========================%
+codegen = codegen.open_file('magnetometer_correct.c');
+
+codegen.add_c_comment('/* calculate kalman gain subterm P * transpose(H) */');
 codegen.format_derived_result('PHt_mag', PHt_mag)
-codegen.format_derived_result('HPHt_V_mag', HPHt_V_mag)
+%codegen.format_derived_result('HPHt_V_mag', HPHt_V_mag)
+
+codegen.add_c_comment('/* calculate error state residual */');
 codegen.format_derived_result('delta_x_mag', delta_x_mag)
+
+codegen.add_c_comment('/* calculate a posteriori process covariance matrix */');
 codegen.format_derived_result('P_post_mag', P_post_mag)
+
 codegen.close_file();
 
 toc();
