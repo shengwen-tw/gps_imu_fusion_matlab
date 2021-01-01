@@ -1,5 +1,6 @@
 classdef ekf_codegen
 	properties
+		filename
 		fid
 		mat_symbol_list = {}
 		mat_symbol_size = 0
@@ -50,12 +51,20 @@ classdef ekf_codegen
 	end
 
 	function ret_obj = open_file(obj, filename)
+		obj.filename = filename;
 		obj.fid = fopen(filename, 'w');
 		ret_obj = obj;
 	end
 
-	function close_file(obj, filename)
+	function close_file(obj)
 		fclose(obj.fid);
+		str = sprintf('codegen: %s is created\n', obj.filename);
+		disp(str);
+	end
+
+	function add_c_comment(obj, comment)
+		str = sprintf('%s\n', comment);
+		fprintf(obj.fid, str);	
 	end
 
 	function [iters, optimized_expr, common_factors] = ...
@@ -99,7 +108,7 @@ classdef ekf_codegen
 		common_factors = common;
 	end
 
-	function format_derived_result(obj, prompt_str, mat)
+	function generate_c_code(obj, prompt_str, mat)
 		%simplify the symbolic deriviation result
 		mat = simplify(mat);
 
