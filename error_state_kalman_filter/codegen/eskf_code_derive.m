@@ -1,6 +1,6 @@
 disp('start symbolic deriviation...')
 
-codegen = codegen_stage1;
+codegen = ekf_codegen;
 
 %loop period time
 syms dt

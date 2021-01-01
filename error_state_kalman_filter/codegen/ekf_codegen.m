@@ -1,4 +1,4 @@
-classdef codegen_stage1
+classdef ekf_codegen
 	properties
 		fid
 		mat_symbol_list = {}
