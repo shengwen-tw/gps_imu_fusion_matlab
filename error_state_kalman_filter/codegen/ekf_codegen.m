@@ -109,9 +109,6 @@ classdef ekf_codegen
 	end
 
 	function generate_c_code(obj, prompt_str, mat, is_symmetry)
-		%simplify the symbolic deriviation result
-		mat = simplify(mat);
-
 		%=============================================================%
 		% factor out common expressions and get optimized expressions %
 		%=============================================================%
