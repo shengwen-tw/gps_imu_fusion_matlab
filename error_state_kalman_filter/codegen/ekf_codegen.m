@@ -205,24 +205,32 @@ classdef ekf_codegen
 					matlab_ccode = char(ccode(optimized_mat(r, c)));
 					my_ccode = strrep(matlab_ccode, '  t0 =', '');
 
-
+					%==================================================%
+					% if matrix is known to be symmetry then just copy %
+					% upper triangle element to lower triangle         %
+					%==================================================%
 					if is_symmetry == 'is_symmetry=1'
 						%c > r: upper triangle
 						%c = r: diagonal
 						%c < r: lower triangle
 						if (c - 1) >= (r - 1)
-							%format derived result
+							%upper triangle & diagonal
 							str = sprintf('%s(%d, %d) =%s\n', ...
 								      prompt_str, r - 1, c - 1, my_ccode);
 
 							str = obj.format_matrix_indexing(str);
 						else
-							%if matrix is known to be symmetry then just copy
-							%upper triangle element to lower triangle
+							%lower triangle
 							str = sprintf('%s(%d, %d) = %s(%d, %d);\n', ...
 								      prompt_str, r - 1, c - 1, ...
 								      prompt_str, c - 1, r - 1);
 						end
+					else
+						%format derived result
+						str = sprintf('%s(%d, %d) =%s\n', ...
+							      prompt_str, r - 1, c - 1, my_ccode);
+
+						str = obj.format_matrix_indexing(str);
 					end
 
 					fprintf(obj.fid, str);
