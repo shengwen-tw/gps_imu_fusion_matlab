@@ -108,7 +108,7 @@ classdef ekf_codegen
 		common_factors = common;
 	end
 
-	function generate_c_code(obj, prompt_str, mat)
+	function generate_c_code(obj, prompt_str, mat, is_symmetry)
 		%simplify the symbolic deriviation result
 		mat = simplify(mat);
 
@@ -205,10 +205,25 @@ classdef ekf_codegen
 					matlab_ccode = char(ccode(optimized_mat(r, c)));
 					my_ccode = strrep(matlab_ccode, '  t0 =', '');
 
-					str = sprintf('%s(%d, %d) =%s\n', ...
-						      prompt_str, r - 1, c - 1, my_ccode);
 
-					str = obj.format_matrix_indexing(str);
+					if is_symmetry == 'is_symmetry=1'
+						%c > r: upper triangle
+						%c = r: diagonal
+						%c < r: lower triangle
+						if (c - 1) >= (r - 1)
+							%format derived result
+							str = sprintf('%s(%d, %d) =%s\n', ...
+								      prompt_str, r - 1, c - 1, my_ccode);
+
+							str = obj.format_matrix_indexing(str);
+						else
+							%if matrix is known to be symmetry then just copy
+							%upper triangle element to lower triangle
+							str = sprintf('%s(%d, %d) = %s(%d, %d);\n', ...
+								      prompt_str, r - 1, c - 1, ...
+								      prompt_str, c - 1, r - 1);
+						end
+					end
 
 					fprintf(obj.fid, str);
 					%disp(str);
