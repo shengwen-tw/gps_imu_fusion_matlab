@@ -180,6 +180,12 @@ classdef ekf_codegen
 
 				str = obj.format_matrix_indexing(str);
 
+				%============================================%
+				% replace divide by 2.0 with multiply by 0.5 %
+				% (which may lower the accuracy)             %
+				%============================================%
+				str = strrep(str, '/2.0', '*0.5');
+
 				fprintf(obj.fid, str);
 				%disp(str);
 			end
@@ -226,9 +232,14 @@ classdef ekf_codegen
 						%format derived result
 						str = sprintf('%s(%d, %d) =%s\n', ...
 							      prompt_str, r - 1, c - 1, my_ccode);
-
 						str = obj.format_matrix_indexing(str);
 					end
+
+					%============================================%
+					% replace divide by 2.0 with multiply by 0.5 %
+					% (which may lower the accuracy)             %
+					%============================================%
+					str = strrep(str, '/2.0', '*0.5');
 
 					fprintf(obj.fid, str);
 					%disp(str);
