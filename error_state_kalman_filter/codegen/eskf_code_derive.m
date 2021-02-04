@@ -105,29 +105,16 @@ Q_i = [[Q_i00     0     0     0     0     0];
        [    0     0     0     0 Q_i44     0];
        [    0     0     0     0     0 Q_i55]];
 
-%P_post = ...
-%    [[P_post00 P_post01 P_post02 P_post03 P_post04 P_post05 P_post06 P_post07 P_post08];
-%     [P_post10 P_post11 P_post12 P_post13 P_post14 P_post15 P_post16 P_post17 P_post18];
-%     [P_post20 P_post21 P_post22 P_post23 P_post24 P_post25 P_post26 P_post27 P_post28];
-%     [P_post30 P_post31 P_post32 P_post33 P_post34 P_post35 P_post36 P_post37 P_post38];
-%     [P_post40 P_post41 P_post42 P_post43 P_post44 P_post45 P_post46 P_post47 P_post48];
-%     [P_post50 P_post51 P_post52 P_post53 P_post54 P_post55 P_post56 P_post57 P_post58];
-%     [P_post60 P_post61 P_post62 P_post63 P_post64 P_post65 P_post66 P_post67 P_post68];
-%     [P_post70 P_post71 P_post72 P_post73 P_post74 P_post75 P_post76 P_post77 P_post78];
-%     [P_post80 P_post81 P_post82 P_post83 P_post84 P_post85 P_post86 P_post87 P_post88]];
-
-%simplfy P_post, assume partial linear independent
 P_post = ...
-    [[P_post00        0        0 P_post03        0        0        0        0        0];
-     [       0 P_post11        0        0 P_post14        0        0        0        0];
-     [       0        0 P_post22        0        0 P_post25        0        0        0];
-     [P_post30        0        0 P_post33        0        0        0        0        0];
-     [       0 P_post41        0        0 P_post44        0        0        0        0];
-     [       0        0 P_post52        0        0 P_post55        0        0        0];
-     [       0        0        0        0        0        0 P_post66 P_post67 P_post68];
-     [       0        0        0        0        0        0 P_post76 P_post77 P_post78];
-     [       0        0        0        0        0        0 P_post86 P_post87 P_post88]];
-
+    [[P_post00 P_post01 P_post02 P_post03 P_post04 P_post05 P_post06 P_post07 P_post08];
+     [P_post10 P_post11 P_post12 P_post13 P_post14 P_post15 P_post16 P_post17 P_post18];
+     [P_post20 P_post21 P_post22 P_post23 P_post24 P_post25 P_post26 P_post27 P_post28];
+     [P_post30 P_post31 P_post32 P_post33 P_post34 P_post35 P_post36 P_post37 P_post38];
+     [P_post40 P_post41 P_post42 P_post43 P_post44 P_post45 P_post46 P_post47 P_post48];
+     [P_post50 P_post51 P_post52 P_post53 P_post54 P_post55 P_post56 P_post57 P_post58];
+     [P_post60 P_post61 P_post62 P_post63 P_post64 P_post65 P_post66 P_post67 P_post68];
+     [P_post70 P_post71 P_post72 P_post73 P_post74 P_post75 P_post76 P_post77 P_post78];
+     [P_post80 P_post81 P_post82 P_post83 P_post84 P_post85 P_post86 P_post87 P_post88]];
 
 F_x = [[1 0 0 dt  0  0             0             0             0];
        [0 1 0  0 dt  0             0             0             0];
@@ -210,15 +197,15 @@ delta_x_accel = K_accel * resid_accel;
 
 %a posteriori covariance matrix update
 P_prior_accel = ...
-    [[P_prior00         0         0 P_prior03         0         0         0         0         0];
-     [        0 P_prior11         0         0 P_prior14         0         0         0         0];
-     [        0         0 P_prior22         0         0 P_prior25         0         0         0];
-     [P_prior30         0         0 P_prior33         0         0         0         0         0];
-     [        0 P_prior41         0         0 P_prior44         0         0         0         0];
-     [        0         0 P_prior52         0         0 P_prior55         0         0         0];
-     [        0         0         0         0         0         0 P_prior66 P_prior67 P_prior68];
-     [        0         0         0         0         0         0 P_prior76 P_prior77 P_prior78];
-     [        0         0         0         0         0         0 P_prior86 P_prior87 P_prior88]];
+    [[P_prior00 P_prior01 P_prior02 P_prior03 P_prior04 P_prior05 P_prior06 P_prior07 P_prior08];
+     [P_prior10 P_prior11 P_prior12 P_prior13 P_prior14 P_prior15 P_prior16 P_prior17 P_prior18];
+     [P_prior20 P_prior21 P_prior22 P_prior23 P_prior24 P_prior25 P_prior26 P_prior27 P_prior28];
+     [P_prior30 P_prior31 P_prior32 P_prior33 P_prior34 P_prior35 P_prior36 P_prior37 P_prior38];
+     [P_prior40 P_prior41 P_prior42 P_prior43 P_prior44 P_prior45 P_prior46 P_prior47 P_prior48];
+     [P_prior50 P_prior51 P_prior52 P_prior53 P_prior54 P_prior55 P_prior56 P_prior57 P_prior58];
+     [P_prior60 P_prior61 P_prior62 P_prior63 P_prior64 P_prior65 P_prior66 P_prior67 P_prior68];
+     [P_prior70 P_prior71 P_prior72 P_prior73 P_prior74 P_prior75 P_prior76 P_prior77 P_prior78];
+     [P_prior80 P_prior81 P_prior82 P_prior83 P_prior84 P_prior85 P_prior86 P_prior87 P_prior88]];
 
 P_post_accel = (eye(9) - K_accel*H_accel) * P_prior_accel;
 
@@ -272,15 +259,15 @@ delta_x_mag = K_mag * resid_mag;
 
 %a posteriori covariance matrix update
 P_prior_mag = ...
-    [[P_prior00         0         0 P_prior03         0         0         0         0         0];
-     [        0 P_prior11         0         0 P_prior14         0         0         0         0];
-     [        0         0 P_prior22         0         0 P_prior25         0         0         0];
-     [P_prior30         0         0 P_prior33         0         0         0         0         0];
-     [        0 P_prior41         0         0 P_prior44         0         0         0         0];
-     [        0         0 P_prior52         0         0 P_prior55         0         0         0];
-     [        0         0         0         0         0         0 P_prior66 P_prior67 P_prior68];
-     [        0         0         0         0         0         0 P_prior76 P_prior77 P_prior78];
-     [        0         0         0         0         0         0 P_prior86 P_prior87 P_prior88]];
+    [[P_prior00 P_prior01 P_prior02 P_prior03 P_prior04 P_prior05 P_prior06 P_prior07 P_prior08];
+     [P_prior10 P_prior11 P_prior12 P_prior13 P_prior14 P_prior15 P_prior16 P_prior17 P_prior18];
+     [P_prior20 P_prior21 P_prior22 P_prior23 P_prior24 P_prior25 P_prior26 P_prior27 P_prior28];
+     [P_prior30 P_prior31 P_prior32 P_prior33 P_prior34 P_prior35 P_prior36 P_prior37 P_prior38];
+     [P_prior40 P_prior41 P_prior42 P_prior43 P_prior44 P_prior45 P_prior46 P_prior47 P_prior48];
+     [P_prior50 P_prior51 P_prior52 P_prior53 P_prior54 P_prior55 P_prior56 P_prior57 P_prior58];
+     [P_prior60 P_prior61 P_prior62 P_prior63 P_prior64 P_prior65 P_prior66 P_prior67 P_prior68];
+     [P_prior70 P_prior71 P_prior72 P_prior73 P_prior74 P_prior75 P_prior76 P_prior77 P_prior78];
+     [P_prior80 P_prior81 P_prior82 P_prior83 P_prior84 P_prior85 P_prior86 P_prior87 P_prior88]];
 
 P_post_mag = (eye(9) - K_mag*H_mag) * P_prior_mag;
 
@@ -315,7 +302,7 @@ codegen.add_c_comment('/* calculate error state residual */');
 codegen.generate_c_code('delta_x_accel', delta_x_accel, 'is_symmetry=0')
 
 codegen.add_c_comment('/* calculate a posteriori process covariance matrix */');
-codegen.generate_c_code('P_post_accel', P_post_accel, 'is_symmetry=0')
+codegen.generate_c_code('P_post_accel', P_post_accel, 'is_symmetry=1')
 
 codegen.close_file();
 
@@ -332,7 +319,7 @@ codegen.add_c_comment('/* calculate error state residual */');
 codegen.generate_c_code('delta_x_mag', delta_x_mag, 'is_symmetry=0')
 
 codegen.add_c_comment('/* calculate a posteriori process covariance matrix */');
-codegen.generate_c_code('P_post_mag', P_post_mag, 'is_symmetry=0')
+codegen.generate_c_code('P_post_mag', P_post_mag, 'is_symmetry=1')
 
 codegen.close_file();
 
