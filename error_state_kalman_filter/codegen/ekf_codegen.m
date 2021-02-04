@@ -74,7 +74,7 @@ classdef ekf_codegen
 
 		complete = 0;
 		index = 0;
-		max_iter = 100;
+		max_iter = 1000;
 		complete = 0;
 		old_expr = expr;
 		common = [];
@@ -90,7 +90,7 @@ classdef ekf_codegen
 			common = [common; new_common];
 
 			%exit if no more common factor
-			if isequal(new_sub_expr, old_expr) == 1
+			if isequaln(new_sub_expr, old_expr) == 1
 				complete = 1;
 			end
 
@@ -201,7 +201,7 @@ classdef ekf_codegen
 		for r = 1:row
 			for c = 1:column
 				%only save non-zero terms
-				if isequal(optimized_mat(r, c), sym('0')) == 0
+				if isequaln(optimized_mat(r, c), sym('0')) == 0
 					matlab_ccode = char(ccode(optimized_mat(r, c)));
 					my_ccode = strrep(matlab_ccode, '  t0 =', '');
 
