@@ -58,7 +58,7 @@ classdef ekf_codegen
 
 	function close_file(obj)
 		fclose(obj.fid);
-		str = sprintf('codegen: %s is created\n', obj.filename);
+		str = sprintf('codegen: %s is created', obj.filename);
 		disp(str);
 	end
 
