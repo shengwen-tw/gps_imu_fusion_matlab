@@ -60,6 +60,18 @@ syms gx gy gz %gravity's component only
 %gps' reading
 syms px_gps py_gps vx_gps vy_gps
 
+%accelerometer without bias
+syms accel_b_x accel_b_y accel_b_z
+
+%gyroscope without bias
+syms gyro_b_x gyro_b_y gyro_b_z
+
+%rotation matrix
+syms R00 R01 R02 ...
+     R10 R11 R12 ...
+     R20 R21 R22
+codegen = codegen.preload_mat_symbol('R', 3, 3);
+
 %-R{a_m - a_b}_x * dt
 syms R_am_ab_dt00  R_am_ab_dt01  R_am_ab_dt02 ...
      R_am_ab_dt10  R_am_ab_dt11  R_am_ab_dt12 ...
@@ -111,6 +123,22 @@ codegen = codegen.preload_mat_symbol('K_gps', 9, 4);
 %============%
 % prediction %
 %============%
+
+R = [R00 R01 R02;
+     R10 R11 R12;
+     R20 R21 R22];
+
+skew_a_b = [         0 -accel_b_z +accel_b_y;
+            +accel_b_z          0 -accel_b_x;
+            -accel_b_y +accel_b_x          0];
+
+R_am_ab_dt = -R * skew_a_b .* dt;
+
+skew_gyro_b = [        0 -gyro_b_z +gyro_b_y;
+               +gyro_b_z         0 -gyro_b_x;
+               -gyro_b_y +gyro_b_x         0];
+
+Rt_wm_wb_dt = eye(3) - skew_gyro_b .* dt;
 
 %simplfy P_post, assume partial linear independent
 Q_i = [[Q_i00     0     0     0     0     0];
@@ -363,6 +391,8 @@ disp('start code generation...')
 codegen = codegen.open_file('predict.c');
 
 codegen.add_c_comment('/* calculate a priori process covariance matrix */');
+codegen.generate_c_code('R_am_ab_dt', R_am_ab_dt, 'is_symmetry=0');
+codegen.generate_c_code('Rt_wm_wb_dt', Rt_wm_wb_dt, 'is_symmetry=0');
 codegen.generate_c_code('P_prior', P_prior, 'is_symmetry=1')
 
 codegen.close_file();
