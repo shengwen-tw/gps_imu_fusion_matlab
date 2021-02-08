@@ -109,15 +109,15 @@ syms K_mag00 K_mag01 K_mag02 ...
 codegen = codegen.preload_mat_symbol('K_mag', 9, 3);
 
 %kalman gain of gps correction
-syms K_gps00 K_gps01 K_gps02 Kgps03 ...
-     K_gps10 K_gps11 K_gps12 Kgps13 ...
-     K_gps20 K_gps21 K_gps22 Kgps23 ...
-     K_gps30 K_gps31 K_gps32 Kgps33 ...
-     K_gps40 K_gps41 K_gps42 Kgps43 ...
-     K_gps50 K_gps51 K_gps52 Kgps53 ...
-     K_gps60 K_gps61 K_gps62 Kgps63 ...
-     K_gps70 K_gps71 K_gps72 Kgps73 ...
-     K_gps80 K_gps81 K_gps82 Kgps83
+syms K_gps00 K_gps01 K_gps02 K_gps03 ...
+     K_gps10 K_gps11 K_gps12 K_gps13 ...
+     K_gps20 K_gps21 K_gps22 K_gps23 ...
+     K_gps30 K_gps31 K_gps32 K_gps33 ...
+     K_gps40 K_gps41 K_gps42 K_gps43 ...
+     K_gps50 K_gps51 K_gps52 K_gps53 ...
+     K_gps60 K_gps61 K_gps62 K_gps63 ...
+     K_gps70 K_gps71 K_gps72 K_gps73 ...
+     K_gps80 K_gps81 K_gps82 K_gps83
 codegen = codegen.preload_mat_symbol('K_gps', 9, 4);
 
 %============%
@@ -350,15 +350,15 @@ Ht_gps = H_gps.';
 PHt_gps = P_prior * Ht_gps;
 HPHt_V_gps = (H_gps * P_prior * Ht_gps) + V_gps;
 
-K_gps = [[K_gps00 K_gps01 K_gps02 Kgps03];
-         [K_gps10 K_gps11 K_gps12 Kgps13];
-         [K_gps20 K_gps21 K_gps22 Kgps23];
-         [K_gps30 K_gps31 K_gps32 Kgps33];
-         [K_gps40 K_gps41 K_gps42 Kgps43];
-         [K_gps50 K_gps51 K_gps52 Kgps53];
-         [K_gps60 K_gps61 K_gps62 Kgps63];
-         [K_gps70 K_gps71 K_gps72 Kgps73];
-         [K_gps80 K_gps81 K_gps82 Kgps83]];
+K_gps = [[K_gps00 K_gps01 K_gps02 K_gps03];
+         [K_gps10 K_gps11 K_gps12 K_gps13];
+         [K_gps20 K_gps21 K_gps22 K_gps23];
+         [K_gps30 K_gps31 K_gps32 K_gps33];
+         [K_gps40 K_gps41 K_gps42 K_gps43];
+         [K_gps50 K_gps51 K_gps52 K_gps53];
+         [K_gps60 K_gps61 K_gps62 K_gps63];
+         [K_gps70 K_gps71 K_gps72 K_gps73];
+         [K_gps80 K_gps81 K_gps82 K_gps83]];
 
 %error state innovation
 delta_x_gps = K_gps * resid_gps;
@@ -402,8 +402,8 @@ codegen.close_file();
 %==========================%
 codegen = codegen.open_file('accelerometer_correct.c');
 
-codegen.add_c_comment('/* calculate kalman gain subterm P * transpose(H) */');
-codegen.generate_c_code('PHt_accel', PHt_accel, 'is_symmetry=0')
+%codegen.add_c_comment('/* calculate kalman gain subterm P * transpose(H) */');
+%codegen.generate_c_code('PHt_accel', PHt_accel, 'is_symmetry=0')
 %codegen.generate_c_code('HPHt_V_accel', HPHt_V_accel)
 
 codegen.add_c_comment('/* calculate error state residual */');
@@ -419,15 +419,15 @@ codegen.close_file();
 %=========================%
 codegen = codegen.open_file('magnetometer_correct.c');
 
-codegen.add_c_comment('/* calculate kalman gain subterm P * transpose(H) */');
-codegen.generate_c_code('PHt_mag', PHt_gps, 'is_symmetry=0')
+%codegen.add_c_comment('/* calculate kalman gain subterm P * transpose(H) */');
+%codegen.generate_c_code('PHt_mag', PHt_gps, 'is_symmetry=0')
 %codegen.generate_c_code('HPHt_V_mag', HPHt_V_mag)
 
 codegen.add_c_comment('/* calculate error state residual */');
-codegen.generate_c_code('delta_x_mag', delta_x_gps, 'is_symmetry=0')
+codegen.generate_c_code('delta_x_mag', delta_x_mag, 'is_symmetry=0')
 
 codegen.add_c_comment('/* calculate a posteriori process covariance matrix */');
-codegen.generate_c_code('P_post_mag', P_post_gps, 'is_symmetry=1')
+codegen.generate_c_code('P_post_mag', P_post_mag, 'is_symmetry=1')
 
 codegen.close_file();
 
@@ -436,15 +436,15 @@ codegen.close_file();
 %================%
 codegen = codegen.open_file('gps.c');
 
-codegen.add_c_comment('/* calculate kalman gain subterm P * transpose(H) */');
-codegen.generate_c_code('PHt_gps', PHt_mag, 'is_symmetry=0')
+%codegen.add_c_comment('/* calculate kalman gain subterm P * transpose(H) */');
+%codegen.generate_c_code('PHt_gps', PHt_mag, 'is_symmetry=0')
 %codegen.generate_c_code('HPHt_V_mag', HPHt_V_mag)
 
 codegen.add_c_comment('/* calculate error state residual */');
-codegen.generate_c_code('delta_x_gps', delta_x_mag, 'is_symmetry=0')
+codegen.generate_c_code('delta_x_gps', delta_x_gps, 'is_symmetry=0')
 
 codegen.add_c_comment('/* calculate a posteriori process covariance matrix */');
-codegen.generate_c_code('P_post_gps', P_post_mag, 'is_symmetry=1')
+codegen.generate_c_code('P_post_gps', P_post_gps, 'is_symmetry=1')
 
 codegen.close_file();
 
