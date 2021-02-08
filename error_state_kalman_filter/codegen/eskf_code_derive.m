@@ -1,4 +1,4 @@
-disp('start symbolic deriviation...')
+disp('start symbolic derivation...')
 
 codegen = ekf_codegen;
 
@@ -254,7 +254,7 @@ codegen = codegen.preload_mat_symbol('PHt_baro', 9, 2);
 %==========================%
 
 %observation matrix
-X_delta_x = [[1 0 0 0 0 0     0     0     0];
+X_error_state = [[1 0 0 0 0 0     0     0     0];
              [0 1 0 0 0 0     0     0     0];
              [0 0 1 0 0 0     0     0     0];
              [0 0 0 1 0 0     0     0     0];
@@ -269,7 +269,7 @@ H_x_accel = [[0 0 0 0 0 0  2*q2  2*q3  2*q0 2*q1];
              [0 0 0 0 0 0 -2*q1 -2*q0  2*q3 2*q2];
              [0 0 0 0 0 0  2*q0 -2*q1 -2*q2 2*q3]];
 
-H_accel = H_x_accel * X_delta_x;
+H_accel = H_x_accel * X_error_state;
 
 %measurement
 y_accel = [[gx];
@@ -314,21 +314,10 @@ K_accel = [[K_accel00 K_accel01 K_accel02];
            [K_accel80 K_accel81 K_accel82]];
 
 %error state innovation
-delta_x_accel = K_accel * resid_accel;
+error_state_accel = K_accel * resid_accel;
 
 %a posteriori covariance matrix update
-P_prior_accel = ...
-    [[P_prior00 P_prior01 P_prior02 P_prior03 P_prior04 P_prior05 P_prior06 P_prior07 P_prior08];
-     [P_prior10 P_prior11 P_prior12 P_prior13 P_prior14 P_prior15 P_prior16 P_prior17 P_prior18];
-     [P_prior20 P_prior21 P_prior22 P_prior23 P_prior24 P_prior25 P_prior26 P_prior27 P_prior28];
-     [P_prior30 P_prior31 P_prior32 P_prior33 P_prior34 P_prior35 P_prior36 P_prior37 P_prior38];
-     [P_prior40 P_prior41 P_prior42 P_prior43 P_prior44 P_prior45 P_prior46 P_prior47 P_prior48];
-     [P_prior50 P_prior51 P_prior52 P_prior53 P_prior54 P_prior55 P_prior56 P_prior57 P_prior58];
-     [P_prior60 P_prior61 P_prior62 P_prior63 P_prior64 P_prior65 P_prior66 P_prior67 P_prior68];
-     [P_prior70 P_prior71 P_prior72 P_prior73 P_prior74 P_prior75 P_prior76 P_prior77 P_prior78];
-     [P_prior80 P_prior81 P_prior82 P_prior83 P_prior84 P_prior85 P_prior86 P_prior87 P_prior88]];
-
-P_post_accel = (eye(9) - K_accel*H_accel) * P_prior_accel;
+P_post_accel = (eye(9) - K_accel*H_accel) * P_prior_TEMP;
 
 %=========================%
 % magnetometer correction %
@@ -341,7 +330,7 @@ H_x_mag = [[0 0 0 0 0 0 2*(+gamma*q0 + mz*q2) 2*(+gamma*q1 + mz*q3) 2*(-gamma*q2
                                                                     2*(+gamma*q0 + mz*q2)];
            [0 0 0 0 0 0 2*(-gamma*q2 + mz*q0) 2*(+gamma*q3 - mz*q1) 2*(-gamma*q0 - mz*q2) ...
                                                                     2*(+gamma*q1 + mz*q3)]];
-H_mag = H_x_mag * X_delta_x;
+H_mag = H_x_mag * X_error_state;
 
 %measurement
 y_mag = [[mx];
@@ -386,21 +375,10 @@ K_mag = [[K_mag00 K_mag01 K_mag02];
          [K_mag80 K_mag81 K_mag82]];
 
 %error state innovation
-delta_x_mag = K_mag * resid_mag;
+error_state_mag = K_mag * resid_mag;
 
 %a posteriori covariance matrix update
-P_prior_mag = ...
-    [[P_prior00 P_prior01 P_prior02 P_prior03 P_prior04 P_prior05 P_prior06 P_prior07 P_prior08];
-     [P_prior10 P_prior11 P_prior12 P_prior13 P_prior14 P_prior15 P_prior16 P_prior17 P_prior18];
-     [P_prior20 P_prior21 P_prior22 P_prior23 P_prior24 P_prior25 P_prior26 P_prior27 P_prior28];
-     [P_prior30 P_prior31 P_prior32 P_prior33 P_prior34 P_prior35 P_prior36 P_prior37 P_prior38];
-     [P_prior40 P_prior41 P_prior42 P_prior43 P_prior44 P_prior45 P_prior46 P_prior47 P_prior48];
-     [P_prior50 P_prior51 P_prior52 P_prior53 P_prior54 P_prior55 P_prior56 P_prior57 P_prior58];
-     [P_prior60 P_prior61 P_prior62 P_prior63 P_prior64 P_prior65 P_prior66 P_prior67 P_prior68];
-     [P_prior70 P_prior71 P_prior72 P_prior73 P_prior74 P_prior75 P_prior76 P_prior77 P_prior78];
-     [P_prior80 P_prior81 P_prior82 P_prior83 P_prior84 P_prior85 P_prior86 P_prior87 P_prior88]];
-
-P_post_mag = (eye(9) - K_mag*H_mag) * P_prior_mag;
+P_post_mag = (eye(9) - K_mag*H_mag) * P_prior_TEMP;
 
 %================%
 % gps correction %
@@ -411,7 +389,7 @@ H_x_gps = [[1 0 0 0 0 0 0 0 0 0];
            [0 1 0 0 0 0 0 0 0 0];
            [0 0 0 1 0 0 0 0 0 0];
 	   [0 0 0 0 1 0 0 0 0 0]];
-H_gps = H_x_gps * X_delta_x;
+H_gps = H_x_gps * X_error_state;
 
 %measurement (from gps receiver)
 y_gps = [[px_gps];
@@ -459,21 +437,10 @@ K_gps = [[K_gps00 K_gps01 K_gps02 K_gps03];
          [K_gps80 K_gps81 K_gps82 K_gps83]];
 
 %error state innovation
-delta_x_gps = K_gps * resid_gps;
+error_state_gps = K_gps * resid_gps;
 
 %a posteriori covariance matrix update
-P_prior_gps = ...
-    [[P_prior00 P_prior01 P_prior02 P_prior03 P_prior04 P_prior05 P_prior06 P_prior07 P_prior08];
-     [P_prior10 P_prior11 P_prior12 P_prior13 P_prior14 P_prior15 P_prior16 P_prior17 P_prior18];
-     [P_prior20 P_prior21 P_prior22 P_prior23 P_prior24 P_prior25 P_prior26 P_prior27 P_prior28];
-     [P_prior30 P_prior31 P_prior32 P_prior33 P_prior34 P_prior35 P_prior36 P_prior37 P_prior38];
-     [P_prior40 P_prior41 P_prior42 P_prior43 P_prior44 P_prior45 P_prior46 P_prior47 P_prior48];
-     [P_prior50 P_prior51 P_prior52 P_prior53 P_prior54 P_prior55 P_prior56 P_prior57 P_prior58];
-     [P_prior60 P_prior61 P_prior62 P_prior63 P_prior64 P_prior65 P_prior66 P_prior67 P_prior68];
-     [P_prior70 P_prior71 P_prior72 P_prior73 P_prior74 P_prior75 P_prior76 P_prior77 P_prior78];
-     [P_prior80 P_prior81 P_prior82 P_prior83 P_prior84 P_prior85 P_prior86 P_prior87 P_prior88]];
-
-P_post_gps = (eye(9) - K_gps*H_gps) * P_prior_gps;
+P_post_gps = (eye(9) - K_gps*H_gps) * P_prior_TEMP;
 
 %======================%
 % barometer correction %
@@ -482,7 +449,7 @@ P_post_gps = (eye(9) - K_gps*H_gps) * P_prior_gps;
 %observation matrix
 H_x_baro = [[0 0 1 0 0 0 0 0 0 0];
             [0 0 0 0 0 1 0 0 0 0]];
-H_baro = H_x_baro * X_delta_x;
+H_baro = H_x_baro * X_error_state;
 
 %measurement (from gps receiver)
 y_baro = [[pz_baro];
@@ -524,21 +491,10 @@ K_baro = [[K_baro00 K_baro01];
          [K_baro80 K_baro81]];
 
 %error state innovation
-delta_x_baro = K_baro * resid_baro;
+error_state_baro = K_baro * resid_baro;
 
 %a posteriori covariance matrix update
-P_prior_baro = ...
-    [[P_prior00 P_prior01 P_prior02 P_prior03 P_prior04 P_prior05 P_prior06 P_prior07 P_prior08];
-     [P_prior10 P_prior11 P_prior12 P_prior13 P_prior14 P_prior15 P_prior16 P_prior17 P_prior18];
-     [P_prior20 P_prior21 P_prior22 P_prior23 P_prior24 P_prior25 P_prior26 P_prior27 P_prior28];
-     [P_prior30 P_prior31 P_prior32 P_prior33 P_prior34 P_prior35 P_prior36 P_prior37 P_prior38];
-     [P_prior40 P_prior41 P_prior42 P_prior43 P_prior44 P_prior45 P_prior46 P_prior47 P_prior48];
-     [P_prior50 P_prior51 P_prior52 P_prior53 P_prior54 P_prior55 P_prior56 P_prior57 P_prior58];
-     [P_prior60 P_prior61 P_prior62 P_prior63 P_prior64 P_prior65 P_prior66 P_prior67 P_prior68];
-     [P_prior70 P_prior71 P_prior72 P_prior73 P_prior74 P_prior75 P_prior76 P_prior77 P_prior78];
-     [P_prior80 P_prior81 P_prior82 P_prior83 P_prior84 P_prior85 P_prior86 P_prior87 P_prior88]];
-
-P_post_baro = (eye(9) - K_baro*H_baro) * P_prior_baro;
+P_post_baro = (eye(9) - K_baro*H_baro) * P_prior_TEMP;
 
 %========================%
 % save derivation result %
@@ -553,9 +509,13 @@ disp('start code generation...')
 %============%
 codegen = codegen.open_file('predict.c');
 
-codegen.add_c_comment('/* calculate a priori process covariance matrix */');
+codegen.add_c_comment('/* calculate -R * skew_matrix(a_m - a_b) * dt */');
 codegen.generate_c_code('R_am_ab_dt', R_am_ab_dt, 'is_symmetry=0');
+
+codegen.add_c_comment('/* calculate Rt{w_m - w_b} * dt */');
 codegen.generate_c_code('Rt_wm_wb_dt', Rt_wm_wb_dt, 'is_symmetry=0');
+
+codegen.add_c_comment('/* calculate a priori process covariance matrix */');
 codegen.generate_c_code('P_prior', P_prior, 'is_symmetry=1')
 
 codegen.close_file();
@@ -572,7 +532,7 @@ codegen.add_c_comment('/* calculate (H * P * Ht) + V */');
 codegen.generate_c_code('HPHt_V_accel', HPHt_V_accel, 'is_symmetry=0')
 
 codegen.add_c_comment('/* calculate error state residual */');
-codegen.generate_c_code('delta_x_accel', delta_x_accel, 'is_symmetry=0')
+codegen.generate_c_code('error_state_accel', error_state_accel, 'is_symmetry=0')
 
 codegen.add_c_comment('/* calculate a posteriori process covariance matrix */');
 codegen.generate_c_code('P_post_accel', P_post_accel, 'is_symmetry=1')
@@ -591,7 +551,7 @@ codegen.add_c_comment('/* calculate (H * P * Ht) + V */');
 codegen.generate_c_code('HPHt_V_mag', HPHt_V_mag, 'is_symmetry=0')
 
 codegen.add_c_comment('/* calculate error state residual */');
-codegen.generate_c_code('delta_x_mag', delta_x_mag, 'is_symmetry=0')
+codegen.generate_c_code('error_state_mag', error_state_mag, 'is_symmetry=0')
 
 codegen.add_c_comment('/* calculate a posteriori process covariance matrix */');
 codegen.generate_c_code('P_post_mag', P_post_mag, 'is_symmetry=1')
@@ -610,7 +570,7 @@ codegen.add_c_comment('/* calculate (H * P * Ht) + V */');
 codegen.generate_c_code('HPHt_V_gps', HPHt_V_gps, 'is_symmetry=0')
 
 codegen.add_c_comment('/* calculate error state residual */');
-codegen.generate_c_code('delta_x_gps', delta_x_gps, 'is_symmetry=0')
+codegen.generate_c_code('error_state_gps', error_state_gps, 'is_symmetry=0')
 
 codegen.add_c_comment('/* calculate a posteriori process covariance matrix */');
 codegen.generate_c_code('P_post_gps', P_post_gps, 'is_symmetry=1')
@@ -629,7 +589,7 @@ codegen.add_c_comment('/* calculate (H * P * Ht) + V */');
 codegen.generate_c_code('HPHt_V_baro', HPHt_V_baro, 'is_symmetry=0')
 
 codegen.add_c_comment('/* calculate error state residual */');
-codegen.generate_c_code('delta_x_baro', delta_x_baro, 'is_symmetry=0')
+codegen.generate_c_code('error_state_baro', error_state_baro, 'is_symmetry=0')
 
 codegen.add_c_comment('/* calculate a posteriori process covariance matrix */');
 codegen.generate_c_code('P_post_baro', P_post_baro, 'is_symmetry=1')
