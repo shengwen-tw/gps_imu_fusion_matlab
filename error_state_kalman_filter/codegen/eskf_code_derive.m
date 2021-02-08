@@ -34,6 +34,16 @@ syms P_prior00 P_prior01 P_prior02 P_prior03 P_prior04 P_prior05 P_prior06 P_pri
      P_prior80 P_prior81 P_prior82 P_prior83 P_prior84 P_prior85 P_prior86 P_prior87 P_prior88
 codegen = codegen.preload_mat_symbol('P_prior', 9, 9);
 
+P_prior_TEMP = [[P_prior00 P_prior01 P_prior02 P_prior03 P_prior04 P_prior05 P_prior06 P_prior07 P_prior08];
+                [P_prior10 P_prior11 P_prior12 P_prior13 P_prior14 P_prior15 P_prior16 P_prior17 P_prior18];
+                [P_prior20 P_prior21 P_prior22 P_prior23 P_prior24 P_prior25 P_prior26 P_prior27 P_prior28];
+                [P_prior30 P_prior31 P_prior32 P_prior33 P_prior34 P_prior35 P_prior36 P_prior37 P_prior38];
+                [P_prior40 P_prior41 P_prior42 P_prior43 P_prior44 P_prior45 P_prior46 P_prior47 P_prior48];
+                [P_prior50 P_prior51 P_prior52 P_prior53 P_prior54 P_prior55 P_prior56 P_prior57 P_prior58];
+                [P_prior60 P_prior61 P_prior62 P_prior63 P_prior64 P_prior65 P_prior66 P_prior67 P_prior68];
+                [P_prior70 P_prior71 P_prior72 P_prior73 P_prior74 P_prior75 P_prior76 P_prior77 P_prior78];
+                [P_prior80 P_prior81 P_prior82 P_prior83 P_prior84 P_prior85 P_prior86 P_prior87 P_prior88]];
+
 syms P_post00 P_post01 P_post02 P_post03 P_post04 P_post05 P_post06 P_post07 P_post08 ...
      P_post10 P_post11 P_post12 P_post13 P_post14 P_post15 P_post16 P_post17 P_post18 ...
      P_post20 P_post21 P_post22 P_post23 P_post24 P_post25 P_post26 P_post27 P_post28 ...
@@ -195,6 +205,50 @@ F_i = [[0 0 0 0 0 0];
 
 P_prior = (F_x * P_post * F_x.') + (F_i * Q_i * F_i.');
 
+syms PHt_accel00 PHt_accel01 PHt_accel02 ...
+     PHt_accel10 PHt_accel11 PHt_accel12 ...
+     PHt_accel20 PHt_accel21 PHt_accel22 ...
+     PHt_accel30 PHt_accel31 PHt_accel32 ...
+     PHt_accel40 PHt_accel41 PHt_accel42 ...
+     PHt_accel50 PHt_accel51 PHt_accel52 ...
+     PHt_accel60 PHt_accel61 PHt_accel62 ...
+     PHt_accel70 PHt_accel71 PHt_accel72 ...
+     PHt_accel80 PHt_accel81 PHt_accel82
+codegen = codegen.preload_mat_symbol('PHt_accel', 9, 3);
+
+syms PHt_mag00 PHt_mag01 PHt_mag02 ...
+     PHt_mag10 PHt_mag11 PHt_mag12 ...
+     PHt_mag20 PHt_mag21 PHt_mag22 ...
+     PHt_mag30 PHt_mag31 PHt_mag32 ...
+     PHt_mag40 PHt_mag41 PHt_mag42 ...
+     PHt_mag50 PHt_mag51 PHt_mag52 ...
+     PHt_mag60 PHt_mag61 PHt_mag62 ...
+     PHt_mag70 PHt_mag71 PHt_mag72 ...
+     PHt_mag80 PHt_mag81 PHt_mag82
+codegen = codegen.preload_mat_symbol('PHt_mag', 9, 3);
+
+syms PHt_gps00 PHt_gps01 PHt_gps02 PHt_gps03 ...
+     PHt_gps10 PHt_gps11 PHt_gps12 PHt_gps13 ...
+     PHt_gps20 PHt_gps21 PHt_gps22 PHt_gps23 ...
+     PHt_gps30 PHt_gps31 PHt_gps32 PHt_gps33 ...
+     PHt_gps40 PHt_gps41 PHt_gps42 PHt_gps43 ...
+     PHt_gps50 PHt_gps51 PHt_gps52 PHt_gps53 ...
+     PHt_gps60 PHt_gps61 PHt_gps62 PHt_gps63 ...
+     PHt_gps70 PHt_gps71 PHt_gps72 PHt_gps73 ...
+     PHt_gps80 PHt_gps81 PHt_gps82 PHt_gps83
+codegen = codegen.preload_mat_symbol('PHt_gps', 9, 4);
+
+syms PHt_baro00 PHt_baro01 ...
+     PHt_baro10 PHt_baro11 ...
+     PHt_baro20 PHt_baro21 ...
+     PHt_baro30 PHt_baro31 ...
+     PHt_baro40 PHt_baro41 ...
+     PHt_baro50 PHt_baro51 ...
+     PHt_baro60 PHt_baro61 ...
+     PHt_baro70 PHt_baro71 ...
+     PHt_baro80 PHt_baro81
+codegen = codegen.preload_mat_symbol('PHt_baro', 9, 2);
+
 %==========================%
 % accelerometer correction %
 %==========================%
@@ -236,8 +290,18 @@ V_accel = [[V_accel00         0         0];
 
 %kalman gain
 Ht_accel = H_accel.';
-PHt_accel = P_prior * Ht_accel;
-HPHt_V_accel = (H_accel * P_prior * Ht_accel) + V_accel;
+PHt_accel = P_prior_TEMP * Ht_accel;
+
+PHt_accel_TEMP = [[PHt_accel00 PHt_accel01 PHt_accel02];
+                  [PHt_accel10 PHt_accel11 PHt_accel12];
+                  [PHt_accel20 PHt_accel21 PHt_accel22];
+                  [PHt_accel30 PHt_accel31 PHt_accel32];
+                  [PHt_accel40 PHt_accel41 PHt_accel42];
+                  [PHt_accel50 PHt_accel51 PHt_accel52];
+                  [PHt_accel60 PHt_accel61 PHt_accel62];
+                  [PHt_accel70 PHt_accel71 PHt_accel72];
+                  [PHt_accel80 PHt_accel81 PHt_accel82]];
+HPHt_V_accel = (H_accel * PHt_accel_TEMP) + V_accel;
 
 K_accel = [[K_accel00 K_accel01 K_accel02];
            [K_accel10 K_accel11 K_accel12];
@@ -298,8 +362,18 @@ V_mag = [[V_mag00       0       0];
 
 %kalman gain
 Ht_mag = H_mag.';
-PHt_mag = P_prior * Ht_mag;
-HPHt_V_mag = (H_mag * P_prior * Ht_mag) + V_mag;
+PHt_mag = P_prior_TEMP * Ht_mag;
+
+PHt_mag_TEMP = [[PHt_mag00 PHt_mag01 PHt_mag02];
+                [PHt_mag10 PHt_mag11 PHt_mag12];
+                [PHt_mag20 PHt_mag21 PHt_mag22];
+                [PHt_mag30 PHt_mag31 PHt_mag32];
+                [PHt_mag40 PHt_mag41 PHt_mag42];
+                [PHt_mag50 PHt_mag51 PHt_mag52];
+                [PHt_mag60 PHt_mag61 PHt_mag62];
+                [PHt_mag70 PHt_mag71 PHt_mag72];
+                [PHt_mag80 PHt_mag81 PHt_mag82]];
+HPHt_V_mag = (H_mag * PHt_mag_TEMP) + V_mag;
 
 K_mag = [[K_mag00 K_mag01 K_mag02];
          [K_mag10 K_mag11 K_mag12];
@@ -361,8 +435,18 @@ V_gps = [[V_gps00       0       0       0];
 
 %kalman gain
 Ht_gps = H_gps.';
-PHt_gps = P_prior * Ht_gps;
-HPHt_V_gps = (H_gps * P_prior * Ht_gps) + V_gps;
+PHt_gps = P_prior_TEMP * Ht_gps;
+
+PHt_gps_TEMP = [[PHt_gps00 PHt_gps01 PHt_gps02 PHt_gps03];
+                [PHt_gps10 PHt_gps11 PHt_gps12 PHt_gps13];
+                [PHt_gps20 PHt_gps21 PHt_gps22 PHt_gps23];
+                [PHt_gps30 PHt_gps31 PHt_gps32 PHt_gps33];
+                [PHt_gps40 PHt_gps41 PHt_gps42 PHt_gps43];
+                [PHt_gps50 PHt_gps51 PHt_gps52 PHt_gps53];
+                [PHt_gps60 PHt_gps61 PHt_gps62 PHt_gps63];
+                [PHt_gps70 PHt_gps71 PHt_gps72 PHt_gps73];
+                [PHt_gps80 PHt_gps81 PHt_gps82 PHt_gps83]];
+HPHt_V_gps = (H_gps * PHt_gps_TEMP) + V_gps;
 
 K_gps = [[K_gps00 K_gps01 K_gps02 K_gps03];
          [K_gps10 K_gps11 K_gps12 K_gps13];
@@ -416,8 +500,18 @@ V_baro = [[V_baro00       0];
 
 %kalman gain
 Ht_baro = H_baro.';
-PHt_baro = P_prior * Ht_baro;
-HPHt_V_baro = (H_baro * P_prior * Ht_baro) + V_baro;
+PHt_baro = P_prior_TEMP * Ht_baro;
+
+PHt_baro_TEMP = [[PHt_baro00 PHt_baro01];
+                 [PHt_baro10 PHt_baro11];
+                 [PHt_baro20 PHt_baro21];
+                 [PHt_baro30 PHt_baro31];
+                 [PHt_baro40 PHt_baro41];
+                 [PHt_baro50 PHt_baro51];
+                 [PHt_baro60 PHt_baro61];
+                 [PHt_baro70 PHt_baro71];
+                 [PHt_baro80 PHt_baro81]];
+HPHt_V_baro = (H_baro * PHt_baro_TEMP) + V_baro;
 
 K_baro = [[K_baro00 K_baro01];
          [K_baro10 K_baro11];
@@ -471,9 +565,11 @@ codegen.close_file();
 %==========================%
 codegen = codegen.open_file('accelerometer_correct.c');
 
-%codegen.add_c_comment('/* calculate kalman gain subterm P * transpose(H) */');
-%codegen.generate_c_code('PHt_accel', PHt_accel, 'is_symmetry=0')
-%codegen.generate_c_code('HPHt_V_accel', HPHt_V_accel)
+codegen.add_c_comment('/* calculate P * Ht */');
+codegen.generate_c_code('PHt_accel', PHt_accel, 'is_symmetry=0')
+
+codegen.add_c_comment('/* calculate (H * P * Ht) + V */');
+codegen.generate_c_code('HPHt_V_accel', HPHt_V_accel, 'is_symmetry=0')
 
 codegen.add_c_comment('/* calculate error state residual */');
 codegen.generate_c_code('delta_x_accel', delta_x_accel, 'is_symmetry=0')
@@ -488,9 +584,11 @@ codegen.close_file();
 %=========================%
 codegen = codegen.open_file('magnetometer_correct.c');
 
-%codegen.add_c_comment('/* calculate kalman gain subterm P * transpose(H) */');
-%codegen.generate_c_code('PHt_mag', PHt_gps, 'is_symmetry=0')
-%codegen.generate_c_code('HPHt_V_mag', HPHt_V_mag)
+codegen.add_c_comment('/* calculate P * Ht */');
+codegen.generate_c_code('PHt_mag', PHt_mag, 'is_symmetry=0')
+
+codegen.add_c_comment('/* calculate (H * P * Ht) + V */');
+codegen.generate_c_code('HPHt_V_mag', HPHt_V_mag, 'is_symmetry=0')
 
 codegen.add_c_comment('/* calculate error state residual */');
 codegen.generate_c_code('delta_x_mag', delta_x_mag, 'is_symmetry=0')
@@ -505,9 +603,11 @@ codegen.close_file();
 %================%
 codegen = codegen.open_file('gps.c');
 
-%codegen.add_c_comment('/* calculate kalman gain subterm P * transpose(H) */');
-%codegen.generate_c_code('PHt_gps', PHt_mag, 'is_symmetry=0')
-%codegen.generate_c_code('HPHt_V_mag', HPHt_V_mag)
+codegen.add_c_comment('/* calculate P * Ht */');
+codegen.generate_c_code('PHt_gps', PHt_gps, 'is_symmetry=0')
+
+codegen.add_c_comment('/* calculate (H * P * Ht) + V */');
+codegen.generate_c_code('HPHt_V_gps', HPHt_V_gps, 'is_symmetry=0')
 
 codegen.add_c_comment('/* calculate error state residual */');
 codegen.generate_c_code('delta_x_gps', delta_x_gps, 'is_symmetry=0')
@@ -522,9 +622,11 @@ codegen.close_file();
 %======================%
 codegen = codegen.open_file('barometer.c');
 
-%codegen.add_c_comment('/* calculate kalman gain subterm P * transpose(H) */');
-%codegen.generate_c_code('PHt_baro', PHt_baro, 'is_symmetry=0')
-%codegen.generate_c_code('HPHt_V_baro', HPHt_V_baro)
+codegen.add_c_comment('/* calculate P * Ht */');
+codegen.generate_c_code('PHt_baro', PHt_baro, 'is_symmetry=0')
+
+codegen.add_c_comment('/* calculate (H * P * Ht) + V */');
+codegen.generate_c_code('HPHt_V_baro', HPHt_V_baro, 'is_symmetry=0')
 
 codegen.add_c_comment('/* calculate error state residual */');
 codegen.generate_c_code('delta_x_baro', delta_x_baro, 'is_symmetry=0')
