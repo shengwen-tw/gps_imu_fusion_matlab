@@ -112,7 +112,6 @@ classdef ekf_codegen
 	end
 
 	function generate_c_code(obj, prompt_str, mat, is_symmetry)
-
 		%=================================================%
 		% factor out common factors from the given matrix %
 		%=================================================%
@@ -131,23 +130,22 @@ classdef ekf_codegen
 		% further optimization: factor out common factors of common factors %
 		%===================================================================%
 		%disp('optimize common expressions');
-		old_common_vars = common_vars;
+		old_expr = common_vars;
 		optimized_commons = {};
 		optimize_depth = 0;
 		c_suffix = '_';
-		complete = 0;
-		while (complete == 0) && (no_common_factors == 0)
+		while no_common_factors == 0
 			optimize_depth = optimize_depth + 1;
 
 			%iteratively factor out common expression
-			[iters, optimized_common_vars, factors_of_common] = ...
-				obj.optimize_deriviation(old_common_vars, c_suffix);
+			[iters, optimized_expr, new_common_factors] = ...
+				obj.optimize_deriviation(old_expr, c_suffix);
 
 			%append current optimized result to the last of the matlab cell
-			optimized_commons{optimize_depth} = optimized_common_vars;
+			optimized_commons{optimize_depth} = optimized_expr;
 
 			%prepare for next iteration
-			old_common_vars = factors_of_common;
+			old_expr = new_common_factors;
 
 			%accumulate suffix symbol '_' when new common variable is found
 			if iters > 0
@@ -155,7 +153,7 @@ classdef ekf_codegen
 			end
 
 			if iters == 0
-				complete = 1;
+				break;
 			end
 		end
 
