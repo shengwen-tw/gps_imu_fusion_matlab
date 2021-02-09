@@ -8,14 +8,14 @@ classdef ekf_codegen
 
 	methods
 
-	function ret_obj = preload_mat_symbol(obj, symbol_name, row, column)
+	function ret_obj = preload_mat_symbol(obj, symbol_name_str, row, column)
 		obj.mat_symbol_size = obj.mat_symbol_size + 1;
-		obj.mat_symbol_list(obj.mat_symbol_size, :) = {symbol_name, [row, column]};
+		obj.mat_symbol_list(obj.mat_symbol_size, :) = {symbol_name_str, [row, column]};
 		%celldisp(obj.mat_symbol_list{obj.mat_symbol_size});
 		ret_obj = obj;
 	end
 
-	function formatted_str = format_matrix_indexing(obj, unformatted_str)
+	function formatted_str = format_matrix_indexing(obj, raw_str)
 		symbol_list_size = size(obj.mat_symbol_list);
 		%celldisp(obj.mat_symbol_list)
 
@@ -40,14 +40,14 @@ classdef ekf_codegen
 					replace_str = ...
 						[mat_name, '(', r_str, ',', c_str, ')'];
 
-					unformatted_str = ...
-						strrep(unformatted_str ,orig_str, replace_str);
-					%disp(unformatted_str);
+					raw_str = ...
+						strrep(raw_str ,orig_str, replace_str);
+					%disp(raw_str);
 				end
 			end
 		end
 
-		formatted_str = unformatted_str;
+		formatted_str = raw_str;
 	end
 
 	function ret_obj = open_file(obj, filename)
@@ -67,48 +67,41 @@ classdef ekf_codegen
 		fprintf(obj.fid, str);	
 	end
 
-	function [iters, optimized_expr, common_factors] = ...
+	function [common_factor_cnt, optimized_expr, common_factors] = ...
 		 optimize_deriviation(obj, expr, suffix)
 
-		syms new_sub_expr old_expr
+		syms optimized_expr old_expr
 
-		complete = 0;
-		index = 0;
+		common_factor_cnt = 0;
 		max_iter = 1000;
-		complete = 0;
 		old_expr = expr;
-		common = [];
+		common_factor_list = [];
 
-		while complete == 0
+		while 1
 			%common variable name (string)
-			common_var_name = ['c', num2str(index), suffix];
+			common_var_name = ['c', num2str(common_factor_cnt), suffix];
 
 			%factor out common expression
-			[new_sub_expr, new_common] = ...
+			[optimized_expr, new_common_factors] = ...
 				subexpr(old_expr, common_var_name);
 
-			common = [common; new_common];
+			common_factor_list = [common_factor_list; new_common_factors];
 
 			%exit if no more common factor
-			if isequaln(new_sub_expr, old_expr) == 1
-				complete = 1;
-
-				if index == 0
-					break;
-				end
+			if isequaln(optimized_expr, old_expr) == 1
+				break;
 			end
 
-			old_expr = new_sub_expr;
-			index = index + 1;
+			old_expr = optimized_expr;
+			common_factor_cnt = common_factor_cnt + 1;
 
-			if index == (max_iter - 1)
-				complete = 1;
+			if common_factor_cnt >= max_iter
+				break;
 			end
 		end
 
-		iters = index;
-		optimized_expr = new_sub_expr;
-		common_factors = common;
+		optimized_expr = optimized_expr;
+		common_factors = common_factor_list;
 	end
 
 	function generate_c_code(obj, prompt_str, mat, is_symmetry)
@@ -116,7 +109,7 @@ classdef ekf_codegen
 		% factor out common factors from the given matrix %
 		%=================================================%
 		%disp('factor out common expressions from input matrix');
-		[iters, optimized_mat, common_vars] = obj.optimize_deriviation(mat, '');
+		[common_factor_cnt, optimized_mat, common_vars] = obj.optimize_deriviation(mat, '');
 		%disp(optimized_mat);
 		%disp(common_vars);
 
@@ -138,7 +131,7 @@ classdef ekf_codegen
 			optimize_depth = optimize_depth + 1;
 
 			%iteratively factor out common expression
-			[iters, optimized_expr, new_common_factors] = ...
+			[common_factor_cnt, optimized_expr, new_common_factors] = ...
 				obj.optimize_deriviation(old_expr, c_suffix);
 
 			%append current optimized result to the last of the matlab cell
@@ -148,11 +141,11 @@ classdef ekf_codegen
 			old_expr = new_common_factors;
 
 			%accumulate suffix symbol '_' when new common variable is found
-			if iters > 0
+			if common_factor_cnt > 0
 				c_suffix = append('_', c_suffix);
 			end
 
-			if iters == 0
+			if common_factor_cnt == 0
 				break;
 			end
 		end
@@ -160,9 +153,9 @@ classdef ekf_codegen
 		%disp(optimize_depth);
 		%celldisp(optimized_commons);
 
-		%================%
-		% common factors %
-		%================%
+		%====================================%
+		% generate c code for common factors %
+		%====================================%
 		%disp('save common factors');
 		while optimize_depth > 0
 			%disp(optimize_depth);
@@ -202,9 +195,9 @@ classdef ekf_codegen
 			optimize_depth = optimize_depth - 1;
 		end
 
-		%===============================%
-		% non-common factor expressions %
-		%===============================%
+		%============================================%
+		% generate c code for non-common expressions %
+		%============================================%
 		%disp('save optimized expressions');
 		[row, column] = size(optimized_mat);
 
