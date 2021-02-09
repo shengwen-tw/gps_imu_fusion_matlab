@@ -92,10 +92,13 @@ classdef ekf_codegen
 			%exit if no more common factor
 			if isequaln(new_sub_expr, old_expr) == 1
 				complete = 1;
+
+				if index == 0
+					break;
+				end
 			end
 
 			old_expr = new_sub_expr;
-
 			index = index + 1;
 
 			if index == (max_iter - 1)
@@ -109,71 +112,78 @@ classdef ekf_codegen
 	end
 
 	function generate_c_code(obj, prompt_str, mat, is_symmetry)
-		%=============================================================%
-		% factor out common expressions and get optimized expressions %
-		%=============================================================%
+
+		%=================================================%
+		% factor out common factors from the given matrix %
+		%=================================================%
 		%disp('factor out common expressions from input matrix');
 		[iters, optimized_mat, common_vars] = obj.optimize_deriviation(mat, '');
 		%disp(optimized_mat);
 		%disp(common_vars);
 
-		%====================================%
-		% optimize common factor expressions %
-		%====================================%
+		no_common_factors = 0;
+		if isempty(common_vars)
+			%no common factors can be extracted, end of the optimization
+			no_common_factors = 1;
+		end
+
+		%===================================================================%
+		% further optimization: factor out common factors of common factors %
+		%===================================================================%
 		%disp('optimize common expressions');
 		old_common_vars = common_vars;
 		optimized_commons = {};
-		depth = 0;
+		optimize_depth = 0;
 		c_suffix = '_';
 		complete = 0;
-		while complete == 0
-			depth = depth + 1;
+		while (complete == 0) && (no_common_factors == 0)
+			optimize_depth = optimize_depth + 1;
 
 			%iteratively factor out common expression
 			[iters, optimized_common_vars, factors_of_common] = ...
 				obj.optimize_deriviation(old_common_vars, c_suffix);
 
 			%append current optimized result to the last of the matlab cell
-			optimized_commons{depth} = optimized_common_vars;
+			optimized_commons{optimize_depth} = optimized_common_vars;
 
 			%prepare for next iteration
 			old_common_vars = factors_of_common;
 
 			%accumulate suffix symbol '_' when new common variable is found
-			if iters > 1
+			if iters > 0
 				c_suffix = append('_', c_suffix);
 			end
 
-			%no more common factor exists, stop the loop
-			if iters == 1
+			if iters == 0
 				complete = 1;
 			end
 		end
 
+		%disp(optimize_depth);
 		%celldisp(optimized_commons);
 
 		%================%
 		% common factors %
 		%================%
 		%disp('save common factors');
-		while depth >= 1
-			%disp(depth);
+		while optimize_depth > 0
+			%disp(optimize_depth);
 
 			%generate suffix of the common variable name according to
-			%the depth size
+			%the optimize_depth size
 			c_suffix = '';
-			suffix_cnt = depth - 1;
+			suffix_cnt = optimize_depth - 1;
 			while suffix_cnt >= 1
 				c_suffix = ['_', c_suffix];
 				suffix_cnt = suffix_cnt - 1;
 			end
 
 			%get list size (row majoring, column is always 1)
-			[row, column] = size(optimized_commons{depth});
+			[row, column] = size(optimized_commons{optimize_depth});
 
 			%formatting and save the expression iteratively in c style
 			for i = 1:row
-				matlab_ccode = char(ccode(optimized_commons{depth}(i, 1)));
+				matlab_ccode = char(ccode(optimized_commons{optimize_depth}(i, 1)));
 				my_ccode = strrep(matlab_ccode, '  t0 =', '');
 
 				str = sprintf('float c%d%s =%s\n', i - 1, c_suffix, my_ccode);
@@ -191,7 +201,7 @@ classdef ekf_codegen
 			end
 			fprintf(obj.fid, "\n");
 
-			depth = depth - 1;
+			optimize_depth = optimize_depth - 1;
 		end
 
 		%===============================%
