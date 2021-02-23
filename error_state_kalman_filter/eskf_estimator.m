@@ -66,8 +66,8 @@ classdef eskf_estimator
              0 0 0 0 0 0 5 0 0 0 0 0;  %delta_x
              0 0 0 0 0 0 0 5 0 0 0 0;  %delta_y
              0 0 0 0 0 0 0 0 5 0 0 0;  %delta_z
-             0 0 0 0 0 0 0 0 0 1e-3 0 0;  %delta a_b_x
-             0 0 0 0 0 0 0 0 0 0 1e-3 0;  %delta a_b_y
+             0 0 0 0 0 0 0 0 0 1e-6 0 0;  %delta a_b_x
+             0 0 0 0 0 0 0 0 0 0 1e-6 0;  %delta a_b_y
              0 0 0 0 0 0 0 0 0 0 0 1e-3]; %delta a_b_z
         
         %observation covariance matrix of accelerometer
@@ -267,6 +267,10 @@ classdef eskf_estimator
         end
         
         function ret_obj = predict(obj, ax, ay, az, wx, wy, wz, dt)
+            ax = ax - obj.x_nominal(11);
+            ay = ay - obj.x_nominal(12);
+            az = az - obj.x_nominal(13);
+            
             %convert accelerometer's reading from body-fixed frame to
             %inertial frame
             a_inertial = obj.R.' * [ax; ay; az];
@@ -275,10 +279,6 @@ classdef eskf_estimator
             a_ned = [a_inertial(1);
                      a_inertial(2);
                      a_inertial(3) + 9.8];
-                 
-            a_ned(1) = a_ned(1) - obj.x_nominal(11);
-            a_ned(2) = a_ned(2) - obj.x_nominal(12);
-            a_ned(3) = a_ned(3) - obj.x_nominal(13);
             
             a = [a_ned(2); a_ned(1); -a_ned(3)]; %NED to ENU
             
