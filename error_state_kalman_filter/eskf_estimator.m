@@ -18,7 +18,10 @@ classdef eskf_estimator
                      1;  %q0
                      0;  %q2
                      0;  %q2
-                     0]; %q3
+                     0;  %q3
+                     0;  %a_b_x
+                     0;  %a_b_y
+                     0]; %a_b_z
                       
         %error state
         delta_x = [0;  %px
@@ -29,7 +32,10 @@ classdef eskf_estimator
                    0;  %vz
                    0;  %theta_x
                    0;  %theta_y
-                   0]; %theta_z
+                   0;  %theta_z
+                   0;  %a_b_x
+                   0;  %a_b_y
+                   0]; %a_b_z
                       
         %attitude direction cosine matrix
         R = eye(3);  %inertial frame to body-fixed frame
@@ -40,23 +46,29 @@ classdef eskf_estimator
         Theta_i = []; %white noise standard deviation of the gyroscope
         
         %covariance matrix of process white noise
-        Q_i = [1e-6 0 0 0 0 0;  %noise of ax
-               0 1e-6 0 0 0 0;  %noise of ay
-               0 0 1e-6 0 0 0;  %noise of az
-               0 0 0 1e-5 0 0;  %noise of wx
-               0 0 0 0 1e-5 0;  %noise of wy
-               0 0 0 0 0 1e-5]; %noise of wz
+        Q_i = [1e-6 0 0 0 0 0 0 0 0;  %noise of ax
+               0 1e-6 0 0 0 0 0 0 0;  %noise of ay
+               0 0 1e-6 0 0 0 0 0 0;  %noise of az
+               0 0 0 1e-5 0 0 0 0 0;  %noise of wx
+               0 0 0 0 1e-5 0 0 0 0;  %noise of wy
+               0 0 0 0 0 1e-5 0 0 0;  %noise of wz
+               0 0 0 0 0 0 1e-10 0 0;  %noise of a_b_x
+               0 0 0 0 0 0 0 1e-10 0;  %noise of a_b_y
+               0 0 0 0 0 0 0 0 1e-10]; %noise of a_b_z  
         
         %process covariance matrix of error state
-        P = [5 0 0 0 0 0 0 0 0;  %px
-             0 5 0 0 0 0 0 0 0;  %py
-             0 0 5 0 0 0 0 0 0;  %pz
-             0 0 0 5 0 0 0 0 0;  %vx
-             0 0 0 0 5 0 0 0 0;  %vy
-             0 0 0 0 0 5 0 0 0;  %vz
-             0 0 0 0 0 0 5 0 0;  %delta_x
-             0 0 0 0 0 0 0 5 0;  %delta_y
-             0 0 0 0 0 0 0 0 5]; %delta_z
+        P = [5 0 0 0 0 0 0 0 0 0 0 0;  %delta px
+             0 5 0 0 0 0 0 0 0 0 0 0;  %delta py
+             0 0 5 0 0 0 0 0 0 0 0 0;  %delta pz
+             0 0 0 5 0 0 0 0 0 0 0 0;  %delta vx
+             0 0 0 0 5 0 0 0 0 0 0 0;  %delta vy
+             0 0 0 0 0 5 0 0 0 0 0 0;  %delta vz
+             0 0 0 0 0 0 5 0 0 0 0 0;  %delta_x
+             0 0 0 0 0 0 0 5 0 0 0 0;  %delta_y
+             0 0 0 0 0 0 0 0 5 0 0 0;  %delta_z
+             0 0 0 0 0 0 0 0 0 1e-3 0 0;  %delta a_b_x
+             0 0 0 0 0 0 0 0 0 0 1e-3 0;  %delta a_b_y
+             0 0 0 0 0 0 0 0 0 0 0 1e-3]; %delta a_b_z
         
         %observation covariance matrix of accelerometer
         V_accel = [7e-2 0 0;  %ax
@@ -82,6 +94,7 @@ classdef eskf_estimator
         I_4x4 = eye(4);
         I_6x6 = eye(6);
         I_9x9 = eye(9);
+        I_12x12 = eye(12);
     end
     
     methods
@@ -262,12 +275,17 @@ classdef eskf_estimator
             a_ned = [a_inertial(1);
                      a_inertial(2);
                      a_inertial(3) + 9.8];
+                 
+            a_ned(1) = a_ned(1) - obj.x_nominal(11);
+            a_ned(2) = a_ned(2) - obj.x_nominal(12);
+            a_ned(3) = a_ned(3) - obj.x_nominal(13);
             
             a = [a_ned(2); a_ned(1); -a_ned(3)]; %NED to ENU
-             
+            
             x_last = obj.x_nominal(1:3);
             v_last = obj.x_nominal(4:6);
             q_last = obj.x_nominal(7:10);
+            a_b_last = obj.x_nominal(11: 13);
             
             %first derivative of the quaternion
             w = [0; wx; wy; wz];
@@ -287,22 +305,32 @@ classdef eskf_estimator
                              v_last(1) + (a(1) * dt); %vx
                              v_last(2) + (a(2) * dt); %vy
                              v_last(3) + (a(3) * dt); %vz
-                             q_integration(1);      %q0
-                             q_integration(2);      %q1
-                             q_integration(3);      %q2
-                             q_integration(4)];     %q3
+                             q_integration(1);        %q0
+                             q_integration(2);        %q1
+                             q_integration(3);        %q2
+                             q_integration(4);        %q3
+                             a_b_last(1);             %a_b_x
+                             a_b_last(2);             %a_b_y
+                             a_b_last(3)];            %a_b_z
                          
             %error state update
-            F_x = zeros(9, 9);
+            F_x = zeros(12, 12);
             F_x(1:3, 1:3) = obj.I_3x3;
             F_x(1:3, 4:6) = obj.I_3x3 .* dt;
             F_x(4:6, 4:6) = obj.I_3x3;
             F_x(4:6, 7:9) = -obj.R * obj.hat_map_3x3(a) * dt;
+            F_x(4:6, 10:12) = obj.R .* dt;
             F_x(7:9, 7:9) = obj.I_3x3 - obj.hat_map_3x3([wx; wy; wz] .* dt);
+            F_x(10:12, 10:12) = obj.I_3x3;
             
-            F_i = zeros(9, 6);
+            F_i = zeros(12, 9);
             F_i(4:6, 1:3) = obj.I_3x3;
             F_i(7:9, 4:6) = obj.I_3x3;
+            F_i(10:12, 7:9) = obj.I_3x3;
+            
+            obj.delta_x = [0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0];
+            %obj.delta_x = F_x * obj.delta_x;
+            %disp(obj.delta_x);
             
             obj.P = (F_x * obj.P * F_x.') + (F_i * obj.Q_i * F_i.');
             
@@ -323,15 +351,15 @@ classdef eskf_estimator
             q3 = obj.x_nominal(10);
             
             %error state observation matrix of accelerometer
-            H_x_accel = [0 0 0 0 0 0  2*q2   2*q3   2*q0  2*q1;
-                         0 0 0 0 0 0 -2*q1  -2*q0   2*q3  2*q2;
-                         0 0 0 0 0 0  2*q0  -2*q1  -2*q2  2*q3];
+            H_x_accel = [0 0 0 0 0 0  2*q2   2*q3   2*q0  2*q1 0 0 0;
+                         0 0 0 0 0 0 -2*q1  -2*q0   2*q3  2*q2 0 0 0;
+                         0 0 0 0 0 0  2*q0  -2*q1  -2*q2  2*q3 0 0 0];
                    
             Q_delte_theta = 0.5 * [-q1 -q2 -q3;
                                     q0 -q3  q2;
                                     q3  q0 -q1;
                                    -q2  q1  q0];
-            X_delta_x = zeros(10, 9);
+            X_delta_x = zeros(13, 12);
             X_delta_x(1:6, 1:6) = obj.I_6x6;
             X_delta_x(7:10, 7:9) = Q_delte_theta;
             
@@ -352,7 +380,7 @@ classdef eskf_estimator
             obj.delta_x = K_accel * (y_accel - h_accel);
             
             %calculate a posteriori process covariance matrix
-            obj.P = (obj.I_9x9 - K_accel*H_accel) * obj.P;
+            obj.P = (obj.I_12x12 - K_accel*H_accel) * obj.P;
             
             %error state injection
             delta_theta_x = obj.delta_x(7);
@@ -379,12 +407,12 @@ classdef eskf_estimator
             
             %error state reset
             if 1
-                G = obj.I_9x9;
+                G = obj.I_12x12;
                 G(7:9, 7:9) = obj.I_3x3 - (0.5 * obj.hat_map_3x3([delta_theta_x;
                                                                   delta_theta_y;
                                                                   delta_theta_z]));
             else
-                G = obj.I_9x9;
+                G = obj.I_12x12;
             end
             
             obj.P = G * obj.P * G.';
@@ -409,17 +437,17 @@ classdef eskf_estimator
             
             %error state observation matrix of accelerometer
             H_x_mag = [0 0 0 0 0 0 2*(+gamma*q0 + mag(3)*q2) 2*(+gamma*q1 + mag(3)*q3) 2*(-gamma*q2 + mag(3)*q0) ...
-                                   2*(-gamma*q3 + mag(3)*q1);
+                                   2*(-gamma*q3 + mag(3)*q1) 0 0 0;
                        0 0 0 0 0 0 2*(+gamma*q3 - mag(3)*q1) 2*(+gamma*q2 - mag(3)*q0) 2*(+gamma*q1 + mag(3)*q3) ...
-                                   2*(+gamma*q0 + mag(3)*q2);
+                                   2*(+gamma*q0 + mag(3)*q2) 0 0 0;
                        0 0 0 0 0 0 2*(-gamma*q2 + mag(3)*q0) 2*(+gamma*q3 - mag(3)*q1) 2*(-gamma*q0 - mag(3)*q2) ...
-                                   2*(+gamma*q1 + mag(3)*q3)];
+                                   2*(+gamma*q1 + mag(3)*q3) 0 0 0];
 
             Q_delte_theta = 0.5 * [-q1 -q2 -q3;
                                     q0 -q3  q2;
                                     q3  q0 -q1;
                                    -q2  q1  q0];
-            X_delta_x = zeros(10, 9);
+            X_delta_x = zeros(13, 12);
             X_delta_x(1:6, 1:6) = obj.I_6x6;
             X_delta_x(7:10, 7:9) = Q_delte_theta;
 
@@ -440,7 +468,7 @@ classdef eskf_estimator
             obj.delta_x = K_mag * (y_mag - h_mag);
             
             %calculate a posteriori process covariance matrix
-            obj.P = (obj.I_9x9 - K_mag*H_mag) * obj.P;
+            obj.P = (obj.I_12x12 - K_mag*H_mag) * obj.P;
             
             %error state injection
             delta_theta_x = obj.delta_x(7);
@@ -467,12 +495,12 @@ classdef eskf_estimator
             
             %error state reset
             if 1
-                G = obj.I_9x9;
+                G = obj.I_12x12;
                 G(7:9, 7:9) = obj.I_3x3 - (0.5 * obj.hat_map_3x3([delta_theta_x;
                                                                   delta_theta_y;
                                                                   delta_theta_z]));
             else
-                G = obj.I_9x9;
+                G = obj.I_12x12;
             end
             obj.P = G * obj.P * G.';
             
@@ -504,19 +532,20 @@ classdef eskf_estimator
                      vy_enu];
                     
             %error state observation matrix of height sensor        
-            H_x_gps = [1 0 0 0 0 0 0 0 0 0;
-                       0 1 0 0 0 0 0 0 0 0;
-                       0 0 0 1 0 0 0 0 0 0;
-                       0 0 0 0 1 0 0 0 0 0];
+            H_x_gps = [1 0 0 0 0 0 0 0 0 0 0 0 0;
+                       0 1 0 0 0 0 0 0 0 0 0 0 0;
+                       0 0 0 1 0 0 0 0 0 0 0 0 0;
+                       0 0 0 0 1 0 0 0 0 0 0 0 0];
                       
             Q_delte_theta = 0.5 * [-q1 -q2 -q3;
                                     q0 -q3  q2;
                                     q3  q0 -q1;
                                    -q2  q1  q0];
-            X_delta_x = zeros(10, 9);
+            X_delta_x = zeros(13, 12);
             X_delta_x(1:6, 1:6) = obj.I_6x6;
             X_delta_x(7:10, 7:9) = Q_delte_theta;
-
+            X_delta_x(11:13, 10:12) = obj.I_3x3;
+            
             H_gps = H_x_gps * X_delta_x;
             
             %prediction of observation vector
@@ -532,16 +561,18 @@ classdef eskf_estimator
             obj.delta_x = K_gps * (y_gps - h_gps);
             
             %calculate a posteriori process covariance matrix
-            obj.P = (obj.I_9x9 - K_gps*H_gps) * obj.P;
+            obj.P = (obj.I_12x12 - K_gps*H_gps) * obj.P;
             
             %error state injection
-            obj.x_nominal(1) = obj.x_nominal(1) + obj.delta_x(1);
-            obj.x_nominal(2) = obj.x_nominal(2) + obj.delta_x(2);
-            obj.x_nominal(4) = obj.x_nominal(4) + obj.delta_x(4);
-            obj.x_nominal(5) = obj.x_nominal(5) + obj.delta_x(5);
+            obj.x_nominal(1) = obj.x_nominal(1) + obj.delta_x(1);    %px
+            obj.x_nominal(2) = obj.x_nominal(2) + obj.delta_x(2);    %py
+            obj.x_nominal(4) = obj.x_nominal(4) + obj.delta_x(4);    %vx
+            obj.x_nominal(5) = obj.x_nominal(5) + obj.delta_x(5);    %vy
+            obj.x_nominal(11) = obj.x_nominal(11) + obj.delta_x(11); %a_b_x
+            obj.x_nominal(12) = obj.x_nominal(12) + obj.delta_x(10); %a_b_y
             
             %error state reset
-            G = obj.I_9x9;
+            G = obj.I_12x12;
             obj.P = G * obj.P * G.';
             
             ret_obj = obj;
@@ -558,17 +589,18 @@ classdef eskf_estimator
                         vz];
                     
             %error state observation matrix of height sensor        
-            H_x_height = [0 0 1 0 0 0 0 0 0 0;
-                          0 0 0 0 0 1 0 0 0 0];
+            H_x_height = [0 0 1 0 0 0 0 0 0 0 0 0 0;
+                          0 0 0 0 0 1 0 0 0 0 0 0 0];
                       
             Q_delte_theta = 0.5 * [-q1 -q2 -q3;
                                     q0 -q3  q2;
                                     q3  q0 -q1;
                                    -q2  q1  q0];
-            X_delta_x = zeros(10, 9);
+            X_delta_x = zeros(13, 12);
             X_delta_x(1:6, 1:6) = obj.I_6x6;
             X_delta_x(7:10, 7:9) = Q_delte_theta;
-
+            X_delta_x(11:13, 10:12) = obj.I_3x3;
+            
             H_height = H_x_height * X_delta_x;
             
             %prediction of observation vector
@@ -584,14 +616,15 @@ classdef eskf_estimator
             obj.delta_x = K_height * (y_height - h_height);
             
             %calculate a posteriori process covariance matrix
-            obj.P = (obj.I_9x9 - K_height*H_height) * obj.P;
+            obj.P = (obj.I_12x12 - K_height*H_height) * obj.P;
             
             %error state injection
-            obj.x_nominal(3) = obj.x_nominal(3) + obj.delta_x(3);
-            obj.x_nominal(6) = obj.x_nominal(6) + obj.delta_x(6);
+            obj.x_nominal(3) = obj.x_nominal(3) + obj.delta_x(3);    %px
+            obj.x_nominal(6) = obj.x_nominal(6) + obj.delta_x(6);    %bx
+            obj.x_nominal(13) = obj.x_nominal(13) + obj.delta_x(12); %a_b_z
             
             %error state reset
-            G = obj.I_9x9;
+            G = obj.I_12x12;
             obj.P = G * obj.P * G.';
             
             ret_obj = obj;

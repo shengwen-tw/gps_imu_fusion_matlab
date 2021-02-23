@@ -59,6 +59,10 @@ fused_enu_vx = zeros(1, data_num);
 fused_enu_vy = zeros(1, data_num);
 fused_eny_vz = zeros(1, data_num);
 %
+accel_bias_x = zeros(1, data_num);
+accel_bias_y = zeros(1, data_num);
+accel_bias_z = zeros(1, data_num);
+%
 %visualization of b1, b2, b3 vectors with quiver3
 b1_visual_sample_cnt = 500;
 quiver_cnt = floor(data_num / b1_visual_sample_cnt);
@@ -86,7 +90,7 @@ gravity_z_arr(1) = -accel_lpf_z(3);
 accelerometer_norm_arr = zeros(1, data_num);
 gravity_norm_arr = zeros(1, data_num);
 %process covariance matrix of error-state kalman filter
-eskf_P = zeros(10, data_num);
+eskf_P = zeros(12, data_num);
 
 vel_ned_body = [0; 0; 0];
                         
@@ -156,6 +160,10 @@ for i = 2: data_num
         j = j + 1;
     end
     
+    accel_bias_x(i) = eskf.x_nominal(11);
+    accel_bias_y(i) = eskf.x_nominal(12);
+    accel_bias_z(i) = eskf.x_nominal(13);
+    
     accelerometer_norm_arr(i) = sqrt(accel_lpf_x(i) * accel_lpf_x(i) + ...
                                      accel_lpf_y(i) * accel_lpf_y(i) + ...
                                      accel_lpf_z(i) * accel_lpf_z(i));
@@ -180,6 +188,9 @@ for i = 2: data_num
     eskf_P(7, i) = eskf.P(7, 7);
     eskf_P(8, i) = eskf.P(8, 8);
     eskf_P(9, i) = eskf.P(9, 9);
+    eskf_P(10, i) = eskf.P(10, 10);
+    eskf_P(11, i) = eskf.P(11, 11);
+    eskf_P(12, i) = eskf.P(12, 12);
 end
 
 %%%%%%%%
@@ -383,10 +394,29 @@ plot(timestamp_s(2: data_num), eskf_P(6, 2: data_num));
 plot(timestamp_s(2: data_num), eskf_P(7, 2: data_num));
 plot(timestamp_s(2: data_num), eskf_P(8, 2: data_num));
 plot(timestamp_s(2: data_num), eskf_P(9, 2: data_num));
+plot(timestamp_s(2: data_num), eskf_P(10, 2: data_num));
+plot(timestamp_s(2: data_num), eskf_P(11, 2: data_num));
+plot(timestamp_s(2: data_num), eskf_P(12, 2: data_num));
 title('process covariance matrix');
 xlabel('time [s]');
 ylabel('P');
-legend('px', 'py', 'pz', 'vx', 'vy', 'vz', 'theta_x', 'theta_y', 'theta_z');
+legend('px', 'py', 'pz', 'vx', 'vy', 'vz', 'theta_x', 'theta_y', 'theta_z', 'ab_x', 'ab_y', 'ab_z');
+
+%accelerometer bias
+figure('Name', 'accelerometer bias (NED)');
+subplot (3, 1, 1);
+plot(timestamp_s, accel_bias_x);
+title('accelerometer bias (NED)');
+xlabel('time [s]');
+ylabel('a_b_x [m/s^2]');
+subplot (3, 1, 2);
+plot(timestamp_s, accel_bias_y);
+xlabel('time [s]');
+ylabel('a_b_y [m/s^2]');
+subplot (3, 1, 3);
+plot(timestamp_s, accel_bias_z);
+xlabel('time [s]');
+ylabel('a_b_z [m/s^2]');
 
 %raw position vs fused position
 figure('Name', 'raw position and fused position (enu frame)');
