@@ -276,12 +276,11 @@ classdef eskf_estimator
             a_inertial = obj.R.' * [ax; ay; az];
             
             %get translational acceleration from accelerometer
-            a_ned = [a_inertial(1);
-                     a_inertial(2);
-                     a_inertial(3) + 9.8];
+            a = [a_inertial(1);
+                 a_inertial(2);
+                 a_inertial(3) + 9.8];
             
-            a = [a_ned(1); a_ned(2); -a_ned(3)]; %NED to ENU
-            
+            a = [-a(1); -a(2); -a(3)]; %FIXME
             x_last = obj.x_nominal(1:3);
             v_last = obj.x_nominal(4:6);
             q_last = obj.x_nominal(7:10);
@@ -581,8 +580,8 @@ classdef eskf_estimator
             q3 = obj.x_nominal(10);
             
             %observation vector of height sensor
-            y_height = [pz;
-                        vz];
+            y_height = [-pz;
+                        -vz];
                     
             %error state observation matrix of height sensor        
             H_x_height = [0 0 1 0 0 0 0 0 0 0 0 0 0;
