@@ -66,8 +66,8 @@ classdef eskf_estimator
              0 0 0 0 0 0 5 0 0 0 0 0;  %delta_x
              0 0 0 0 0 0 0 5 0 0 0 0;  %delta_y
              0 0 0 0 0 0 0 0 5 0 0 0;  %delta_z
-             0 0 0 0 0 0 0 0 0 1e-6 0 0;  %delta a_b_x
-             0 0 0 0 0 0 0 0 0 0 1e-6 0;  %delta a_b_y
+             0 0 0 0 0 0 0 0 0 1e-3 0 0;  %delta a_b_x
+             0 0 0 0 0 0 0 0 0 0 1e-3 0;  %delta a_b_y
              0 0 0 0 0 0 0 0 0 0 0 1e-3]; %delta a_b_z
         
         %observation covariance matrix of accelerometer
@@ -280,7 +280,7 @@ classdef eskf_estimator
                      a_inertial(2);
                      a_inertial(3) + 9.8];
             
-            a = [a_ned(2); a_ned(1); -a_ned(3)]; %NED to ENU
+            a = [a_ned(1); a_ned(2); -a_ned(3)]; %NED to ENU
             
             x_last = obj.x_nominal(1:3);
             v_last = obj.x_nominal(4:6);
@@ -518,18 +518,14 @@ classdef eskf_estimator
             
             %convert longitute/ latitude to ENU position
             pos_enu = obj.convert_gps_ellipsoid_coordinates_to_enu(longitude, latitude, 0);
-            px_enu = pos_enu(1);
-            py_enu = pos_enu(2);
-            
-            %convert NED velocity to ENU frame
-            vx_enu = vy_ned;
-            vy_enu = vx_ned;
+            px_ned = pos_enu(2);
+            py_ned = pos_enu(1);
             
             %observation vector of gps receiver
-            y_gps = [px_enu;
-                     py_enu;
-                     vx_enu;
-                     vy_enu];
+            y_gps = [px_ned;
+                     py_ned;
+                     vx_ned;
+                     vy_ned];
                     
             %error state observation matrix of height sensor        
             H_x_gps = [1 0 0 0 0 0 0 0 0 0 0 0 0;
@@ -568,8 +564,8 @@ classdef eskf_estimator
             obj.x_nominal(2) = obj.x_nominal(2) + obj.delta_x(2);    %py
             obj.x_nominal(4) = obj.x_nominal(4) + obj.delta_x(4);    %vx
             obj.x_nominal(5) = obj.x_nominal(5) + obj.delta_x(5);    %vy
-            obj.x_nominal(11) = obj.x_nominal(11) + obj.delta_x(11); %a_b_x
-            obj.x_nominal(12) = obj.x_nominal(12) + obj.delta_x(10); %a_b_y
+            obj.x_nominal(11) = obj.x_nominal(11) + obj.delta_x(10); %a_b_x
+            obj.x_nominal(12) = obj.x_nominal(12) + obj.delta_x(11); %a_b_y
             
             %error state reset
             G = obj.I_12x12;
