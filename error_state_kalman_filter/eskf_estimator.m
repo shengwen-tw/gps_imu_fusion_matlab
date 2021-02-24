@@ -564,6 +564,7 @@ classdef eskf_estimator
             obj.x_nominal(5) = obj.x_nominal(5) + obj.delta_x(5);    %vy
             obj.x_nominal(11) = obj.x_nominal(11) + obj.delta_x(10); %a_b_x
             obj.x_nominal(12) = obj.x_nominal(12) + obj.delta_x(11); %a_b_y
+            %obj.x_nominal(13) = obj.x_nominal(13) + obj.delta_x(12); %a_b_z
             
             %error state reset
             G = obj.I_12x12;
@@ -615,6 +616,8 @@ classdef eskf_estimator
             %error state injection
             obj.x_nominal(3) = obj.x_nominal(3) + obj.delta_x(3);    %px
             obj.x_nominal(6) = obj.x_nominal(6) + obj.delta_x(6);    %bx
+            %obj.x_nominal(11) = obj.x_nominal(11) + obj.delta_x(10); %a_b_x
+            %obj.x_nominal(12) = obj.x_nominal(12) + obj.delta_x(11); %a_b_y
             obj.x_nominal(13) = obj.x_nominal(13) + obj.delta_x(12); %a_b_z
             
             %error state reset
