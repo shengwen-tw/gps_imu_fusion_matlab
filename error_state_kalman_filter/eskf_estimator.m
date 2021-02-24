@@ -81,14 +81,14 @@ classdef eskf_estimator
                  0 0 3]; %mz
              
         %observation covariance matrix of the gps sensor
-        V_gps = [5e-5 0 0 0;  %px
-                 0 5e-5 0 0;  %py
+        V_gps = [5 0 0 0;  %px
+                 0 5 0 0;  %py
                  0 0 1e-4 0;   %vx
                  0 0 0 1e-4];  %vy
              
         %%observation covariance matrix of the height sensor
-        V_height = [1e-5 0;  %pz
-                    0 1e-2]; %vz   
+        V_height = [1e-1 0;  %pz
+                    0 1e-1]; %vz   
                 
         I_3x3 = eye(3);
         I_4x4 = eye(4);
@@ -280,7 +280,6 @@ classdef eskf_estimator
                  a_inertial(2);
                  a_inertial(3) + 9.8];
             
-            a = [-a(1); -a(2); -a(3)]; %FIXME
             x_last = obj.x_nominal(1:3);
             v_last = obj.x_nominal(4:6);
             q_last = obj.x_nominal(7:10);
@@ -318,7 +317,7 @@ classdef eskf_estimator
             F_x(1:3, 4:6) = obj.I_3x3 .* dt;
             F_x(4:6, 4:6) = obj.I_3x3;
             F_x(4:6, 7:9) = -obj.R * obj.hat_map_3x3(a) * dt;
-            F_x(4:6, 10:12) = obj.R .* dt;
+            F_x(4:6, 10:12) = -obj.R .* dt;
             F_x(7:9, 7:9) = obj.I_3x3 - obj.hat_map_3x3([wx; wy; wz] .* dt);
             F_x(10:12, 10:12) = obj.I_3x3;
             
