@@ -93,8 +93,8 @@ classdef eskf_estimator
                  0 0 1e-3]; %mz
              
         %observation covariance matrix of the gps sensor
-        V_gps = [5 0 0 0;  %px
-                 0 5 0 0;  %py
+        V_gps = [1 0 0 0;  %px
+                 0 1 0 0;  %py
                  0 0 1e-4 0;   %vx
                  0 0 0 1e-4];  %vy
              
