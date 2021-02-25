@@ -65,8 +65,8 @@ classdef ekf_estimator
                  0 0 10];
 
         %observation covariance matrix of the gps sensor
-        R_gps = [5e-5 0 0 0;  %px
-                 0 5e-5 0 0;  %py
+        R_gps = [5e-3 0 0 0;  %px
+                 0 5e-3 0 0;  %py
                  0 0 1e-4 0;   %vx
                  0 0 0 1e-4];  %vy
         
