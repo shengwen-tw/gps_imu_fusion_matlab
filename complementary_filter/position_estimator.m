@@ -115,12 +115,12 @@ classdef position_estimator
             position_enu_y = position_enu(2);
             
             %velocity complementary filter
-            weight_gps_vel = 0.2;
+            weight_gps_vel = 0.6;
             obj.fused_enu_vx = (1 - weight_gps_vel) * obj.fused_enu_vx + weight_gps_vel * velocity_enu_x;
             obj.fused_enu_vy = (1 - weight_gps_vel) * obj.fused_enu_vy + weight_gps_vel * velocity_enu_y;
             
             %position complementary filter
-            weight_gps_pos = 0.5;
+            weight_gps_pos = 0.035;
             obj.fused_enu_x = (1 - weight_gps_pos) * obj.fused_enu_x + weight_gps_pos * position_enu_x;
             obj.fused_enu_y = (1 - weight_gps_pos) * obj.fused_enu_y + weight_gps_pos * position_enu_y;
             
