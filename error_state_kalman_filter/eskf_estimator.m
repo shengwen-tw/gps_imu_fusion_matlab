@@ -77,10 +77,10 @@ classdef eskf_estimator
              0 0 0 0 0 0 0 0 5 0 0 0 0 0 0;     %delta_z
              0 0 0 0 0 0 0 0 0 1e-3 0 0 0 0 0;  %delta a_b_x
              0 0 0 0 0 0 0 0 0 0 1e-3 0 0 0 0;  %delta a_b_y
-             0 0 0 0 0 0 0 0 0 0 0 1e-3 0 0 0;  %delta a_b_z
-             0 0 0 0 0 0 0 0 0 0 0 0 1e-3 0 0;  %delta w_b_x
-             0 0 0 0 0 0 0 0 0 0 0 0 0 1e-3 0;  %delta w_b_y
-             0 0 0 0 0 0 0 0 0 0 0 0 0 0 1e-3]; %delta w_b_z
+             0 0 0 0 0 0 0 0 0 0 0 1e-1 0 0 0;  %delta a_b_z
+             0 0 0 0 0 0 0 0 0 0 0 0 1e-1 0 0;  %delta w_b_x
+             0 0 0 0 0 0 0 0 0 0 0 0 0 1e-1 0;  %delta w_b_y
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 1e-4]; %delta w_b_z
         
         %observation covariance matrix of accelerometer
         V_accel = [7e-2 0 0;  %ax
