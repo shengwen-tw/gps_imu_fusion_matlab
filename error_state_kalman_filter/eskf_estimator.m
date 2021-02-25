@@ -77,10 +77,10 @@ classdef eskf_estimator
              0 0 0 0 0 0 0 0 5 0 0 0 0 0 0;     %delta_z
              0 0 0 0 0 0 0 0 0 1e-3 0 0 0 0 0;  %delta a_b_x
              0 0 0 0 0 0 0 0 0 0 1e-3 0 0 0 0;  %delta a_b_y
-             0 0 0 0 0 0 0 0 0 0 0 1e-1 0 0 0;  %delta a_b_z
-             0 0 0 0 0 0 0 0 0 0 0 0 1e-1 0 0;  %delta w_b_x
-             0 0 0 0 0 0 0 0 0 0 0 0 0 1e-1 0;  %delta w_b_y
-             0 0 0 0 0 0 0 0 0 0 0 0 0 0 1e-4]; %delta w_b_z
+             0 0 0 0 0 0 0 0 0 0 0 1e-3 0 0 0;  %delta a_b_z
+             0 0 0 0 0 0 0 0 0 0 0 0 1e-6 0 0;  %delta w_b_x
+             0 0 0 0 0 0 0 0 0 0 0 0 0 1e-6 0;  %delta w_b_y
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 1e-6]; %delta w_b_z
         
         %observation covariance matrix of accelerometer
         V_accel = [7e-2 0 0;  %ax
@@ -88,9 +88,9 @@ classdef eskf_estimator
                    0 0 7e-2]; %az
                
         %observation covariance matrix of accelerometer
-        V_mag = [3 0 0;  %mx
-                 0 3 0;  %my
-                 0 0 3]; %mz
+        V_mag = [1e-3 0 0;  %mx
+                 0 1e-3 0;  %my
+                 0 0 1e-3]; %mz
              
         %observation covariance matrix of the gps sensor
         V_gps = [5 0 0 0;  %px
@@ -429,7 +429,7 @@ classdef eskf_estimator
             obj.x_nominal(7:10) = obj.quat_normalize(obj.x_nominal(7:10));
             obj.x_nominal(14) = obj.x_nominal(14) + obj.delta_x(13); %w_b_x
             obj.x_nominal(15) = obj.x_nominal(15) + obj.delta_x(14); %w_b_y
-            %obj.x_nominal(16) = obj.x_nominal(16) + obj.delta_x(15); %w_b_z
+            obj.x_nominal(16) = obj.x_nominal(16) + obj.delta_x(15); %w_b_z
             
             %error state reset
             if 1
@@ -520,8 +520,8 @@ classdef eskf_estimator
             
             obj.x_nominal(7:10) = obj.quaternion_mult(obj.x_nominal(7:10), q_error);
             obj.x_nominal(7:10) = obj.quat_normalize(obj.x_nominal(7:10));
-            %obj.x_nominal(14) = obj.x_nominal(14) + obj.delta_x(13); %w_b_x
-            %obj.x_nominal(15) = obj.x_nominal(15) + obj.delta_x(14); %w_b_y
+            obj.x_nominal(14) = obj.x_nominal(14) + obj.delta_x(13); %w_b_x
+            obj.x_nominal(15) = obj.x_nominal(15) + obj.delta_x(14); %w_b_y
             obj.x_nominal(16) = obj.x_nominal(16) + obj.delta_x(15); %w_b_z
             
             %error state reset
