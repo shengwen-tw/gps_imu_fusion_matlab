@@ -83,9 +83,9 @@ classdef eskf_estimator
              0 0 0 0 0 0 0 0 0 0 0 0 0 0 1e-6]; %delta w_b_z
         
         %observation covariance matrix of accelerometer
-        V_accel = [7e-2 0 0;  %ax
-                   0 7e-2 0;  %ay
-                   0 0 7e-2]; %az
+        V_accel = [7e-1 0 0;  %ax
+                   0 7e-1 0;  %ay
+                   0 0 7e-1]; %az
                
         %observation covariance matrix of accelerometer
         V_mag = [1e-3 0 0;  %mx
@@ -361,7 +361,7 @@ classdef eskf_estimator
             ret_obj = obj;
         end
         
-        function ret_obj = accel_correct(obj, gx, gy, gz)
+        function ret_obj = accel_correct1(obj, gx, gy, gz)
             %normalize gravity vector
             gravity = [gx; gy; gz];
             y_accel = gravity / norm(gravity);
@@ -392,6 +392,157 @@ classdef eskf_estimator
             h_accel = [2 * (q0*q2 + q1*q3);
                        2 * (q2*q3 - q0*q1);
                        q0*q0 - q1*q1 - q2*q2 + q3*q3];
+            
+            %calculate kalman gain
+            H_accel_t = H_accel.';
+            PHt_accel = obj.P * H_accel_t;
+            K_accel = PHt_accel / (H_accel * PHt_accel + obj.V_accel);
+            %disp(K_accel);
+            
+            %calculate error state residul
+            obj.delta_x = K_accel * (y_accel - h_accel);
+            
+            %calculate a posteriori process covariance matrix
+            obj.P = (obj.I_15x15 - K_accel*H_accel) * obj.P;
+            
+            %error state injection
+            delta_theta_x = obj.delta_x(7);
+            delta_theta_y = obj.delta_x(8);
+            delta_theta_z = obj.delta_x(9);
+            
+            if 1
+            	q_error = [1;
+            	           0.5 * delta_theta_x;
+                           0.5 * delta_theta_y;
+                           0.5 * delta_theta_z];
+            else
+                delta_theta_norm = sqrt(delta_theta_x * delta_theta_x + ...
+                                        delta_theta_y * delta_theta_y + ...
+                                        delta_theta_z * delta_theta_z);
+                q_error = [cos(delta_theta_norm / 2);
+                           delta_theta_x;
+                           delta_theta_y;
+                           delta_theta_z];
+            end
+            
+            obj.x_nominal(7:10) = obj.quaternion_mult(obj.x_nominal(7:10), q_error);
+            obj.x_nominal(7:10) = obj.quat_normalize(obj.x_nominal(7:10));
+            obj.x_nominal(14) = obj.x_nominal(14) + obj.delta_x(13); %w_b_x
+            obj.x_nominal(15) = obj.x_nominal(15) + obj.delta_x(14); %w_b_y
+            obj.x_nominal(16) = obj.x_nominal(16) + obj.delta_x(15); %w_b_z
+            
+            %error state reset
+            if 1
+                G = obj.I_15x15;
+                G(7:9, 7:9) = obj.I_3x3 - (0.5 * obj.hat_map_3x3([delta_theta_x;
+                                                                  delta_theta_y;
+                                                                  delta_theta_z]));
+            else
+                G = obj.I_15x15;
+            end
+            
+            obj.P = G * obj.P * G.';
+            
+            %update rotation matrix for position estimation
+            obj.R = obj.quat_to_rotation_matrix(obj.x_nominal(7:10));
+            
+            ret_obj = obj;
+        end
+        
+        function ret_obj = accel_correct2(obj, ax, ay, az, wx, wy, wz)
+            %normalize gravity vector
+            vx = obj.x_nominal(4);
+            vy = obj.x_nominal(5);
+            vz = obj.x_nominal(6);
+            
+            q0 = obj.x_nominal(7);
+            q1 = obj.x_nominal(8);
+            q2 = obj.x_nominal(9);
+            q3 = obj.x_nominal(10);
+            
+            wbx = obj.x_nominal(14);
+            wby = obj.x_nominal(15);
+            wbz = obj.x_nominal(16);
+            
+            wmx_sub_wbx = wx - wbx;
+            wmy_sub_wby = wy - wby;
+            wmz_sub_wbz = wz - wbz;
+            
+            y_accel = cross([wmx_sub_wbx; wmy_sub_wby; wmz_sub_wbz], obj.R * [vx; vy; vz]) - [ax; ay; az];
+            
+            g = 9.8;
+            
+            %error state observation matrix of accelerometer
+            dgx_dpx = 0;
+            dgy_dpx = 0;
+            dgz_dpx = 0;
+            dgx_dpy = 0;
+            dgy_dpy = 0;
+            dgz_dpy = 0;
+            dgx_dpz = 0;
+            dgy_dpz = 0;
+            dgz_dpz = 0;
+            dgx_dvx = 2*wmy_sub_wby*(q1*q3-q0*q2) - 2*wmz_sub_wbz*(q1*q2+q0*q3);
+            dgy_dvx = wmz_sub_wbz*(q0*q0+q1*q1-q2*q2-q3*q3) - 2*wmx_sub_wbx*(q1*q3-q0*q2);
+            dgz_dvx = 2*wmx_sub_wbx*(q1*q2+q0*q3) - wmy_sub_wby*(q0*q0+q1*q1-q2*q2-q3*q3);
+            dgx_dvy = 2*wmy_sub_wby*(q0*q1+q2*q3) - wmz_sub_wbz*(q0*q0-q1*q1+q2*q2-q3*q3);
+            dgy_dvy = 2*wmz_sub_wbz*(q1*q2-q0*q3) - 2*wmx_sub_wbx*(q0*q1 + q2*q3);
+            dgz_dvy = wmx_sub_wbx*(q0*q0-q1*q1+q2*q2-q3*q3) - 2*wmy_sub_wby*(q1*q2-q0*q3);
+            dgx_dvz = wmy_sub_wby*(q0*q0-q1*q1-q2*q2+q3*q3) - 2*wmz_sub_wbz*(q2*q3-q0*q1);
+            dgy_dvz = 2*wmz_sub_wbz*(q0*q2+q1*q3) - wmx_sub_wbx*(q0*q0-q1*q1-q2*q2+q3*q3);
+            dgz_dvz = 2*wmx_sub_wbx*(q2*q3-q0*q1) - 2*wmy_sub_wby*(q0*q2+q1*q3);
+            dgx_dq0 = 2*wmy_sub_wby*(-q2*vx+q1*vy+q0*vz) - wmz_sub_wbz*(q3*vx+q0*vy-q1*vz);
+            dgy_dq0 = 2*wmz_sub_wbz*(q0*vx-q3*vy+q2*vz) - 2*wmx_sub_wbx*(-q2*vx+q1*vy+q0*vz);
+            dgz_dq0 = 2*wmx_sub_wbx*(q3*vx+q0*vy-q1*vz) - 2*wmy_sub_wby*(q0*vx-q3*vy+q2*vz);
+            dgx_dq1 = 2*wmy_sub_wby*(q3*vx+q0*vy-q1*vz) - 2*wmz_sub_wbz*(q2*vx-q1*vy-q0*vz);
+            dgy_dq1 = 2*wmz_sub_wbz*(q1*vx+q2*vy+q3*vz) - 2*wmx_sub_wbx*(q3*vx+q0*vy-q1*vz);
+            dgz_dq1 = 2*wmx_sub_wbx*(q2*vx-q1*vy-q0*vz) - 2*wmy_sub_wby*(q1*vx+q2*vy+q3*vz);
+            dgx_dq2 = 2*wmy_sub_wby*(-q0*vx+q3*vy-q2*vz) - 2*wmz_sub_wbz*(q1*vx+q2*vy+q3*vz);
+            dgy_dq2 = 2*wmz_sub_wbz*(-q2*vx+q1*vy+q0*vz) - 2*wmx_sub_wbx*(-q0*vx+q3*vy-q2*vz);
+            dgz_dq2 = 2*wmx_sub_wbx*(q1*vx+q2*vy+q3*vz) - 2*wmy_sub_wby*(-q2*vx+q1*vy+q0*vz);
+            dgx_dq3 = 2*wmy_sub_wby*(q1*vx+q2*vy+q3*vz) - 2*wmz_sub_wbz*(q0*vx-q3*vy+q2*vz);
+            dgy_dq3 = 2*wmz_sub_wbz*(-q3*vx-q0*vy+q1*vz) - 2*wmx_sub_wbx*(q1*vx+q2*vy+q3*vz);
+            dgz_dq3 = 2*wmx_sub_wbx*(q0*vx-q3*vy+q2*vz) - 2*wmy_sub_wby*(-q3*vx-q0*vy+q1*vz);
+            dgx_dabx = 0;
+            dgy_dabx = 0;
+            dgz_dabx = 0;
+            dgx_daby = 0;
+            dgy_daby = 0;
+            dgz_daby = 0;
+            dgx_dabz = 0;
+            dgy_dabz = 0;
+            dgz_dabz = 0;
+            dgx_dwbx = 0;
+            dgy_dwbx = 2*(q1*q3-q0*q2)*vx + 2*(q0*q1+q2*q3)*vy + (q0*q0-q1*q1-q2*q2+q3*q3)*vz;
+            dgz_dwbx = -(2*(q1*q2 + q0*q3)*vx + (q0*q0-q1*q1-q2*q2-q3*q3)*vy + 2*(q2*q3-q0*q1)*vz);
+            dgx_dwby = -(2*(q1*q3-q0*q2)*vx + 2*(q0*q1+q2*q3)*vy + (q0*q0-q1*q1-q2*q2+q3*q3)*vz);
+            dgy_dwby = 0;
+            dgz_dwby = (q0*q0+q1*q1-q2*q2-q3*q3)*vx + 2*(q1*q2-q0*q3)*vy + 2*(q0*q2+q1*q3)*vz;
+            dgx_dwbz = 2*(q1*q2+q0*q3)*vx + (q0*q0-q1*q1+q2*q2-q3*q3)*vy + 2*(q2*q3-q0*q1)*vz;
+            dgy_dwbz = -((q0*q0+q1*q1-q2*q2-q3*q3)*vx + 2*(q1*q2-q0*q3)*vy + 2*(q0*q2+q1*q3)*vz);
+            dgz_dwbz = 0;
+            
+            H_x_accel = [dgx_dpx dgx_dpy dgx_dpz dgx_dvx dgx_dvy dgx_dvz dgx_dq0 dgx_dq1 dgx_dq2 dgx_dq3 dgx_dabx dgx_daby dgx_dabz dgx_dwbx dgx_dwby dgx_dwbz;
+                         dgy_dpx dgy_dpy dgy_dpz dgy_dvx dgy_dvy dgy_dvz dgy_dq0 dgy_dq1 dgy_dq2 dgy_dq3 dgy_dabx dgy_daby dgy_dabz dgy_dwbx dgy_dwby dgy_dwbz;
+                         dgz_dpx dgz_dpy dgz_dpz dgz_dvx dgz_dvy dgz_dvz dgz_dq0 dgz_dq1 dgz_dq2 dgz_dq3 dgz_dabx dgz_daby dgz_dabz dgz_dwbx dgz_dwby dgz_dwbz];
+
+                   
+            Q_delte_theta = 0.5 * [-q1 -q2 -q3;
+                                    q0 -q3  q2;
+                                    q3  q0 -q1;
+                                   -q2  q1  q0];
+            X_delta_x = zeros(16, 15);
+            X_delta_x(1:6, 1:6) = obj.I_6x6;
+            X_delta_x(7:10, 7:9) = Q_delte_theta;
+            X_delta_x(11:13, 10:12) = obj.I_3x3;
+            X_delta_x(14:16, 13:15) = obj.I_3x3;
+            
+            H_accel = H_x_accel * X_delta_x;
+
+            %prediction of gravity vector using gyroscope
+            h_accel = [2 * g * (q0*q2 + q1*q3);
+                       2 * g * (q2*q3 - q0*q1);
+                       g * (q0*q0 - q1*q1 - q2*q2 + q3*q3)];
             
             %calculate kalman gain
             H_accel_t = H_accel.';

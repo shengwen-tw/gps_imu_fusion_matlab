@@ -117,7 +117,9 @@ for i = 2: data_num
                         gyro_raw_x(i), gyro_raw_y(i), gyro_raw_z(i), dt);
     
     %eskf correction from gravity vector
-    eskf = eskf.accel_correct(gravity(1), gravity(2), gravity(3));
+    eskf = eskf.accel_correct1(gravity(1), gravity(2), gravity(3));
+    %eskf = eskf.accel_correct2(accel_lpf_x(i), accel_lpf_y(i), accel_lpf_z(i), ...
+    %                           gyro_raw_x(i), gyro_raw_y(i), gyro_raw_z(i));
     
     %eskf correction from magnetometer
     eskf = eskf.mag_correct(mag_raw_x(i), mag_raw_y(i), mag_raw_z(i));
