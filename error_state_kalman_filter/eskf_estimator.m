@@ -536,7 +536,6 @@ classdef eskf_estimator
             H_x_accel = [dgx_dpx dgx_dpy dgx_dpz dgx_dvx dgx_dvy dgx_dvz dgx_dq0 dgx_dq1 dgx_dq2 dgx_dq3 dgx_dabx dgx_daby dgx_dabz dgx_dwbx dgx_dwby dgx_dwbz;
                          dgy_dpx dgy_dpy dgy_dpz dgy_dvx dgy_dvy dgy_dvz dgy_dq0 dgy_dq1 dgy_dq2 dgy_dq3 dgy_dabx dgy_daby dgy_dabz dgy_dwbx dgy_dwby dgy_dwbz;
                          dgz_dpx dgz_dpy dgz_dpz dgz_dvx dgz_dvy dgz_dvz dgz_dq0 dgz_dq1 dgz_dq2 dgz_dq3 dgz_dabx dgz_daby dgz_dabz dgz_dwbx dgz_dwby dgz_dwbz];
-
                    
             Q_delte_theta = 0.5 * [-q1 -q2 -q3;
                                     q0 -q3  q2;
