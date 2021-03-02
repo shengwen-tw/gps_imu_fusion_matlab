@@ -8,6 +8,8 @@ classdef eskf_estimator
         home_ecef_y = 0;
         home_ecef_z = 0;
         
+        gravity = [0; 0; 9.8];
+        
         %nomnial state
         x_nominal = [0;  %px
                      0;  %py
@@ -361,9 +363,17 @@ classdef eskf_estimator
             ret_obj = obj;
         end
         
-        function ret_obj = accel_correct1(obj, gx, gy, gz)
+        function ret_obj = accel_correct1(obj, ax, ay, az, wx, wy, wz)
+            %calculate gravity vector
+            vx = obj.x_nominal(4);
+            vy = obj.x_nominal(5);
+            vz = obj.x_nominal(6);
+            accel_translational = cross([wx; wy; wz], [vx; vy; vz]);
+            gravity = accel_translational - [ax; ay; az];
+            
+            obj.gravity = gravity;
+            
             %normalize gravity vector
-            gravity = [gx; gy; gz];
             y_accel = gravity / norm(gravity);
             
             q0 = obj.x_nominal(7);
@@ -469,6 +479,7 @@ classdef eskf_estimator
             wmz_sub_wbz = wz - wbz;
             
             y_accel = cross([wmx_sub_wbx; wmy_sub_wby; wmz_sub_wbz], obj.R * [vx; vy; vz]) - [ax; ay; az];
+            obj.gravity = y_accel;
             
             g = 9.8;
             

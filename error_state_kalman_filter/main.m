@@ -101,25 +101,20 @@ vel_ned_body = [0; 0; 0];
 for i = 2: data_num
     dt = timestamp_s(i) - timestamp_s(i - 1);
     
-    %eliminate body-fixed frame acceleration induced by rotation for
-    %getting better gravity vector
-    accel_translational = cross([gyro_raw_x(i); gyro_raw_y(i); gyro_raw_z(i)], vel_ned_body);
-    gravity = [accel_translational(1) - accel_lpf_x(i);
-               accel_translational(2) - accel_lpf_y(i);
-               accel_translational(3) - accel_lpf_z(i)];
-    
-    gravity_x_arr(i) = gravity(1);
-    gravity_y_arr(i) = gravity(2);
-    gravity_z_arr(i) = gravity(3);
-    
     %eskf state update (prediction)
     eskf = eskf.predict(accel_lpf_x(i), accel_lpf_y(i), accel_lpf_z(i), ...
                         gyro_raw_x(i), gyro_raw_y(i), gyro_raw_z(i), dt);
     
     %eskf correction from gravity vector
-    eskf = eskf.accel_correct1(gravity(1), gravity(2), gravity(3));
-    %eskf = eskf.accel_correct2(accel_lpf_x(i), accel_lpf_y(i), accel_lpf_z(i), ...
+    %eskf = eskf.accel_correct1(accel_lpf_x(i), accel_lpf_y(i), accel_lpf_z(i), ...
     %                           gyro_raw_x(i), gyro_raw_y(i), gyro_raw_z(i));
+    eskf = eskf.accel_correct2(accel_lpf_x(i), accel_lpf_y(i), accel_lpf_z(i), ...
+                               gyro_raw_x(i), gyro_raw_y(i), gyro_raw_z(i));
+                           
+    gravity = eskf.gravity;
+    gravity_x_arr(i) = gravity(1);
+    gravity_y_arr(i) = gravity(2);
+    gravity_z_arr(i) = gravity(3);
     
     %eskf correction from magnetometer
     eskf = eskf.mag_correct(mag_raw_x(i), mag_raw_y(i), mag_raw_z(i));
