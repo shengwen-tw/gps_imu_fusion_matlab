@@ -2,6 +2,8 @@ classdef eskf_estimator
     %assumption: NED coordinate system
     
     properties
+        g_constant = 9.8;
+        
         home_longitude = 0;
         home_latitude = 0;
         home_ecef_x = 0;
@@ -85,9 +87,9 @@ classdef eskf_estimator
              0 0 0 0 0 0 0 0 0 0 0 0 0 0 1e-6]; %delta w_b_z
         
         %observation covariance matrix of accelerometer
-        V_accel = [7e-2 0 0;  %ax
-                   0 7e-2 0;  %ay
-                   0 0 7e-2]; %az
+        V_accel = [7e-3 0 0;  %ax
+                   0 7e-3 0;  %ay
+                   0 0 7e-3]; %az
                
         %observation covariance matrix of accelerometer
         V_mag = [1e-3 0 0;  %mx
@@ -296,7 +298,7 @@ classdef eskf_estimator
             %get translational acceleration from accelerometer
             a = [a_inertial(1);
                  a_inertial(2);
-                 a_inertial(3) + 9.8];
+                 a_inertial(3) + obj.g_constant];
             
             x_last = obj.x_nominal(1:3);
             v_last = obj.x_nominal(4:6);
@@ -478,11 +480,11 @@ classdef eskf_estimator
             wmy_sub_wby = wy - wby;
             wmz_sub_wbz = wz - wbz;
             
-            y_accel = cross([wmx_sub_wbx; wmy_sub_wby; wmz_sub_wbz], obj.R * [vx; vy; vz]) - [ax; ay; az];
-            obj.gravity = y_accel;
+            g = obj.g_constant;
             
-            g = 9.8;
-            
+            y_accel = [ax; ay; az];
+            obj.gravity = [0; 0; 0]; %gravity estimation is not valid in acceleromter correction model 2 
+                        
             %error state observation matrix of accelerometer
             dgx_dpx = 0;
             dgy_dpx = 0;
@@ -502,18 +504,18 @@ classdef eskf_estimator
             dgx_dvz = wmy_sub_wby*(q0*q0-q1*q1-q2*q2+q3*q3) - 2*wmz_sub_wbz*(q2*q3-q0*q1);
             dgy_dvz = 2*wmz_sub_wbz*(q0*q2+q1*q3) - wmx_sub_wbx*(q0*q0-q1*q1-q2*q2+q3*q3);
             dgz_dvz = 2*wmx_sub_wbx*(q2*q3-q0*q1) - 2*wmy_sub_wby*(q0*q2+q1*q3);
-            dgx_dq0 = 2*wmy_sub_wby*(-q2*vx+q1*vy+q0*vz) - 2*wmz_sub_wbz*(q3*vx+q0*vy-q1*vz);
-            dgy_dq0 = 2*wmz_sub_wbz*(q0*vx-q3*vy+q2*vz) - 2*wmx_sub_wbx*(-q2*vx+q1*vy+q0*vz);
-            dgz_dq0 = 2*wmx_sub_wbx*(q3*vx+q0*vy-q1*vz) - 2*wmy_sub_wby*(q0*vx-q3*vy+q2*vz);
-            dgx_dq1 = 2*wmy_sub_wby*(q3*vx+q0*vy-q1*vz) - 2*wmz_sub_wbz*(q2*vx-q1*vy-q0*vz);
-            dgy_dq1 = 2*wmz_sub_wbz*(q1*vx+q2*vy+q3*vz) - 2*wmx_sub_wbx*(q3*vx+q0*vy-q1*vz);
-            dgz_dq1 = 2*wmx_sub_wbx*(q2*vx-q1*vy-q0*vz) - 2*wmy_sub_wby*(q1*vx+q2*vy+q3*vz);
-            dgx_dq2 = 2*wmy_sub_wby*(-q0*vx+q3*vy-q2*vz) - 2*wmz_sub_wbz*(q1*vx+q2*vy+q3*vz);
-            dgy_dq2 = 2*wmz_sub_wbz*(-q2*vx+q1*vy+q0*vz) - 2*wmx_sub_wbx*(-q0*vx+q3*vy-q2*vz);
-            dgz_dq2 = 2*wmx_sub_wbx*(q1*vx+q2*vy+q3*vz) - 2*wmy_sub_wby*(-q2*vx+q1*vy+q0*vz);
-            dgx_dq3 = 2*wmy_sub_wby*(q1*vx+q2*vy+q3*vz) - 2*wmz_sub_wbz*(q0*vx-q3*vy+q2*vz);
-            dgy_dq3 = 2*wmz_sub_wbz*(-q3*vx-q0*vy+q1*vz) - 2*wmx_sub_wbx*(q1*vx+q2*vy+q3*vz);
-            dgz_dq3 = 2*wmx_sub_wbx*(q0*vx-q3*vy+q2*vz) - 2*wmy_sub_wby*(-q3*vx-q0*vy+q1*vz);
+            dgx_dq0 = 2*wmy_sub_wby*(-q2*vx+q1*vy+q0*vz) - 2*wmz_sub_wbz*(q3*vx+q0*vy-q1*vz) - 2*g*q2;
+            dgy_dq0 = 2*wmz_sub_wbz*(q0*vx-q3*vy+q2*vz) - 2*wmx_sub_wbx*(-q2*vx+q1*vy+q0*vz) + 2*g*q1;
+            dgz_dq0 = 2*wmx_sub_wbx*(q3*vx+q0*vy-q1*vz) - 2*wmy_sub_wby*(q0*vx-q3*vy+q2*vz) - 2*g*q0;
+            dgx_dq1 = 2*wmy_sub_wby*(q3*vx+q0*vy-q1*vz) - 2*wmz_sub_wbz*(q2*vx-q1*vy-q0*vz) - 2*g*q3;
+            dgy_dq1 = 2*wmz_sub_wbz*(q1*vx+q2*vy+q3*vz) - 2*wmx_sub_wbx*(q3*vx+q0*vy-q1*vz) + 2*g*q0;
+            dgz_dq1 = 2*wmx_sub_wbx*(q2*vx-q1*vy-q0*vz) - 2*wmy_sub_wby*(q1*vx+q2*vy+q3*vz) + 2*g*q1;
+            dgx_dq2 = 2*wmy_sub_wby*(-q0*vx+q3*vy-q2*vz) - 2*wmz_sub_wbz*(q1*vx+q2*vy+q3*vz) - 2*g*q0;
+            dgy_dq2 = 2*wmz_sub_wbz*(-q2*vx+q1*vy+q0*vz) - 2*wmx_sub_wbx*(-q0*vx+q3*vy-q2*vz) - 2*g*q3;
+            dgz_dq2 = 2*wmx_sub_wbx*(q1*vx+q2*vy+q3*vz) - 2*wmy_sub_wby*(-q2*vx+q1*vy+q0*vz) + 2*g*q2;
+            dgx_dq3 = 2*wmy_sub_wby*(q1*vx+q2*vy+q3*vz) - 2*wmz_sub_wbz*(q0*vx-q3*vy+q2*vz) - 2*g*q1;
+            dgy_dq3 = 2*wmz_sub_wbz*(-q3*vx-q0*vy+q1*vz) - 2*wmx_sub_wbx*(q1*vx+q2*vy+q3*vz) - 2*g*q2;
+            dgz_dq3 = 2*wmx_sub_wbx*(q0*vx-q3*vy+q2*vz) - 2*wmy_sub_wby*(-q3*vx-q0*vy+q1*vz) - 2*g*q3;
             dgx_dabx = 0;
             dgy_dabx = 0;
             dgz_dabx = 0;
@@ -550,10 +552,8 @@ classdef eskf_estimator
             H_accel = H_x_accel * X_delta_x;
 
             %prediction of gravity vector using gyroscope
-            h_accel = [2 * g * (q0*q2 + q1*q3);
-                       2 * g * (q2*q3 - q0*q1);
-                       g * (q0*q0 - q1*q1 - q2*q2 + q3*q3)];
-            
+            h_accel = cross([wmx_sub_wbx; wmy_sub_wby; wmz_sub_wbz], obj.R * [vx; vy; vz]) - obj.R * [0; 0; g];
+
             %calculate kalman gain
             H_accel_t = H_accel.';
             PHt_accel = obj.P * H_accel_t;
