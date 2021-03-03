@@ -85,9 +85,9 @@ classdef eskf_estimator
              0 0 0 0 0 0 0 0 0 0 0 0 0 0 1e-6]; %delta w_b_z
         
         %observation covariance matrix of accelerometer
-        V_accel = [7e-1 0 0;  %ax
-                   0 7e-1 0;  %ay
-                   0 0 7e-1]; %az
+        V_accel = [7e-2 0 0;  %ax
+                   0 7e-2 0;  %ay
+                   0 0 7e-2]; %az
                
         %observation covariance matrix of accelerometer
         V_mag = [1e-3 0 0;  %mx
@@ -502,7 +502,7 @@ classdef eskf_estimator
             dgx_dvz = wmy_sub_wby*(q0*q0-q1*q1-q2*q2+q3*q3) - 2*wmz_sub_wbz*(q2*q3-q0*q1);
             dgy_dvz = 2*wmz_sub_wbz*(q0*q2+q1*q3) - wmx_sub_wbx*(q0*q0-q1*q1-q2*q2+q3*q3);
             dgz_dvz = 2*wmx_sub_wbx*(q2*q3-q0*q1) - 2*wmy_sub_wby*(q0*q2+q1*q3);
-            dgx_dq0 = 2*wmy_sub_wby*(-q2*vx+q1*vy+q0*vz) - wmz_sub_wbz*(q3*vx+q0*vy-q1*vz);
+            dgx_dq0 = 2*wmy_sub_wby*(-q2*vx+q1*vy+q0*vz) - 2*wmz_sub_wbz*(q3*vx+q0*vy-q1*vz);
             dgy_dq0 = 2*wmz_sub_wbz*(q0*vx-q3*vy+q2*vz) - 2*wmx_sub_wbx*(-q2*vx+q1*vy+q0*vz);
             dgz_dq0 = 2*wmx_sub_wbx*(q3*vx+q0*vy-q1*vz) - 2*wmy_sub_wby*(q0*vx-q3*vy+q2*vz);
             dgx_dq1 = 2*wmy_sub_wby*(q3*vx+q0*vy-q1*vz) - 2*wmz_sub_wbz*(q2*vx-q1*vy-q0*vz);
@@ -525,7 +525,7 @@ classdef eskf_estimator
             dgz_dabz = 0;
             dgx_dwbx = 0;
             dgy_dwbx = 2*(q1*q3-q0*q2)*vx + 2*(q0*q1+q2*q3)*vy + (q0*q0-q1*q1-q2*q2+q3*q3)*vz;
-            dgz_dwbx = -(2*(q1*q2 + q0*q3)*vx + (q0*q0-q1*q1-q2*q2-q3*q3)*vy + 2*(q2*q3-q0*q1)*vz);
+            dgz_dwbx = -(2*(q1*q2 + q0*q3)*vx + (q0*q0-q1*q1+q2*q2-q3*q3)*vy + 2*(q2*q3-q0*q1)*vz);
             dgx_dwby = -(2*(q1*q3-q0*q2)*vx + 2*(q0*q1+q2*q3)*vy + (q0*q0-q1*q1-q2*q2+q3*q3)*vz);
             dgy_dwby = 0;
             dgz_dwby = (q0*q0+q1*q1-q2*q2-q3*q3)*vx + 2*(q1*q2-q0*q3)*vy + 2*(q0*q2+q1*q3)*vz;
