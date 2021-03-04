@@ -56,17 +56,17 @@ classdef eskf_estimator
         Theta_i = []; %white noise standard deviation of the gyroscope
         
         %covariance matrix of process white noise
-        Q_i = [1e-6 0 0 0 0 0 0 0 0 0 0 0;   %noise of ax
-               0 1e-6 0 0 0 0 0 0 0 0 0 0;   %noise of ay
-               0 0 1e-6 0 0 0 0 0 0 0 0 0;   %noise of az
+        Q_i = [1e-5 0 0 0 0 0 0 0 0 0 0 0;   %noise of ax
+               0 1e-5 0 0 0 0 0 0 0 0 0 0;   %noise of ay
+               0 0 1e-5 0 0 0 0 0 0 0 0 0;   %noise of az
                0 0 0 1e-5 0 0 0 0 0 0 0 0;   %noise of wx
                0 0 0 0 1e-5 0 0 0 0 0 0 0;   %noise of wy
                0 0 0 0 0 1e-5 0 0 0 0 0 0;   %noise of wz
                0 0 0 0 0 0 1e-10 0 0 0 0 0;  %noise of a_b_x
                0 0 0 0 0 0 0 1e-10 0 0 0 0;  %noise of a_b_y
                0 0 0 0 0 0 0 0 1e-10 0 0 0;  %noise of a_b_z  
-               0 0 0 0 0 0 0 0 0 1e-9 0 0;   %noise of w_b_x
-               0 0 0 0 0 0 0 0 0 0 1e-9 0;   %noise of w_b_y
+               0 0 0 0 0 0 0 0 0 1e-10 0 0;   %noise of w_b_x
+               0 0 0 0 0 0 0 0 0 0 1e-10 0;   %noise of w_b_y
                0 0 0 0 0 0 0 0 0 0 0 1e-10]; %noise of w_b_z
         
         %process covariance matrix of error state
@@ -84,7 +84,7 @@ classdef eskf_estimator
              0 0 0 0 0 0 0 0 0 0 0 1e-3 0 0 0;  %delta a_b_z
              0 0 0 0 0 0 0 0 0 0 0 0 1e-4 0 0;  %delta w_b_x
              0 0 0 0 0 0 0 0 0 0 0 0 0 1e-4 0;  %delta w_b_y
-             0 0 0 0 0 0 0 0 0 0 0 0 0 0 1e-6]; %delta w_b_z
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 1e-4]; %delta w_b_z
         
         %observation covariance matrix of accelerometer
         V_accel = [7e-3 0 0;  %ax
