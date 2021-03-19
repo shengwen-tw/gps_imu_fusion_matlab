@@ -48,8 +48,8 @@ classdef eskf_estimator
                    0]; %w_b_z
                       
         %attitude direction cosine matrix
-        R = eye(3);  %inertial frame to body-fixed frame
-        Rt = eye(3); %body-fixed frame to inertial frame
+        R = eye(3);  %body-fixed frame to inertial frame
+        Rt = eye(3); %inertial frame to body-fixed frame
         
         %noise parameters
         V_i = [];     %white noise standard deviation of the acceleromter
@@ -65,8 +65,8 @@ classdef eskf_estimator
                0 0 0 0 0 0 1e-10 0 0 0 0 0;  %noise of a_b_x
                0 0 0 0 0 0 0 1e-10 0 0 0 0;  %noise of a_b_y
                0 0 0 0 0 0 0 0 1e-10 0 0 0;  %noise of a_b_z  
-               0 0 0 0 0 0 0 0 0 1e-10 0 0;   %noise of w_b_x
-               0 0 0 0 0 0 0 0 0 0 1e-10 0;   %noise of w_b_y
+               0 0 0 0 0 0 0 0 0 1e-10 0 0;  %noise of w_b_x
+               0 0 0 0 0 0 0 0 0 0 1e-10 0;  %noise of w_b_y
                0 0 0 0 0 0 0 0 0 0 0 1e-10]; %noise of w_b_z
         
         %process covariance matrix of error state
@@ -79,12 +79,12 @@ classdef eskf_estimator
              0 0 0 0 0 0 5 0 0 0 0 0 0 0 0;     %delta_x
              0 0 0 0 0 0 0 5 0 0 0 0 0 0 0;     %delta_y
              0 0 0 0 0 0 0 0 5 0 0 0 0 0 0;     %delta_z
-             0 0 0 0 0 0 0 0 0 1e-3 0 0 0 0 0;  %delta a_b_x
-             0 0 0 0 0 0 0 0 0 0 1e-3 0 0 0 0;  %delta a_b_y
-             0 0 0 0 0 0 0 0 0 0 0 1e-3 0 0 0;  %delta a_b_z
-             0 0 0 0 0 0 0 0 0 0 0 0 1e-4 0 0;  %delta w_b_x
-             0 0 0 0 0 0 0 0 0 0 0 0 0 1e-4 0;  %delta w_b_y
-             0 0 0 0 0 0 0 0 0 0 0 0 0 0 1e-4]; %delta w_b_z
+             0 0 0 0 0 0 0 0 0 1e-6 0 0 0 0 0;  %delta a_b_x
+             0 0 0 0 0 0 0 0 0 0 1e-6 0 0 0 0;  %delta a_b_y
+             0 0 0 0 0 0 0 0 0 0 0 1e-6 0 0 0;  %delta a_b_z
+             0 0 0 0 0 0 0 0 0 0 0 0 1e-6 0 0;  %delta w_b_x
+             0 0 0 0 0 0 0 0 0 0 0 0 0 1e-6 0;  %delta w_b_y
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 1e-6]; %delta w_b_z
         
         %observation covariance matrix of accelerometer
         V_accel = [7e-3 0 0;  %ax
@@ -135,35 +135,6 @@ classdef eskf_estimator
                      q(2) * div_q_norm;
                      q(3) * div_q_norm;
                      q(4) * div_q_norm];
-        end
-
-        function R = prepare_body_to_earth_rotation_matrix(obj, q)
-            q0q0 = q(1) * q(1);
-            q1q1 = q(2) * q(2);
-            q2q2 = q(3) * q(3);
-            q3q3 = q(4) * q(4);
-            q0q3 = q(1) * q(4);
-            q1q2 = q(2) * q(3);
-            q2q3 = q(3) * q(4);
-            q1q3 = q(2) * q(4);
-            q0q2 = q(1) * q(3);
-            q0q1 = q(1) * q(2);
-
-            r11 = q0q0 + q1q1 - q2q2 - q3q3;
-            r12 = 2*(q1q2 - q0q3);
-            r13 = 2*(q1q3 + q0q2);
-
-            r21 = 2*(q1q2 + q0q3);
-            r22 = q0q0 - q1q1 + q2q2 - q3q3;
-            r23 = 2*(q2q3 - q0q1);
-
-            r31 = 2*(q1q3 - q0q2);
-            r32 = 2*(q2q3 + q0q1);
-            r33 = q0q0 - q1q1 - q2q2 + q3q3;
-            
-            R = [r11 r12 r13;
-                 r21 r22 r23;
-                 r31 r32 r33];
         end
         
         function R = quat_to_rotation_matrix(obj, q)
@@ -219,13 +190,9 @@ classdef eskf_estimator
         end
         
         function quaternion = get_quaternion(obj)
-            %return the conjugated quaternion since we use the opposite convention compared to the paper
-            %paper: quaternion of earth frame to body-fixed frame
-            %us: quaternion of body-fixed frame to earth frame
             quaternion = obj.x_nominal(7:10);
-            quaternion = obj.quaternion_conj(quaternion);
-            %quaternion = obj.quaternion_mult(obj.q_inclination, quaternion);
         end
+        
         function vec_enu = convert_3x1_vector_ned_to_enu(obj, vec_ned)
             vec_enu = [+vec_ned(2);
                        +vec_ned(1);
@@ -284,16 +251,16 @@ classdef eskf_estimator
         end
         
         function ret_obj = predict(obj, ax, ay, az, wx, wy, wz, dt)
-            ax = ax - obj.x_nominal(11);
-            ay = ay - obj.x_nominal(12);
-            az = az - obj.x_nominal(13);
-            wx = wx - obj.x_nominal(14);
-            wy = wy - obj.x_nominal(15);
-            wz = wz - obj.x_nominal(16);
+            ax = ax;% - obj.x_nominal(11);
+            ay = ay;% - obj.x_nominal(12);
+            az = az;% - obj.x_nominal(13);
+            wx = wx;% - obj.x_nominal(14);
+            wy = wy;% - obj.x_nominal(15);
+            wz = wz;% - obj.x_nominal(16);
             
             %convert accelerometer's reading from body-fixed frame to
             %inertial frame
-            a_inertial = obj.R.' * [ax; ay; az];
+            a_inertial = obj.R * [ax; ay; az];
             
             %get translational acceleration from accelerometer
             a = [a_inertial(1);
@@ -308,10 +275,10 @@ classdef eskf_estimator
             
             %first derivative of the quaternion
             w = [0; wx; wy; wz];
-            q_dot = obj.quaternion_mult(w, q_last);
+            q_dot = obj.quaternion_mult(q_last, w);
             
             %nominal state update
-            half_dt = -0.5 * dt;
+            half_dt = 0.5 * dt;
             half_dt_squared = 0.5 * (dt * dt);
             q_integration = [q_last(1) + q_dot(1) * half_dt;
                              q_last(2) + q_dot(2) * half_dt;
@@ -384,9 +351,9 @@ classdef eskf_estimator
             q3 = obj.x_nominal(10);
             
             %error state observation matrix of accelerometer
-            H_x_accel = [0 0 0 0 0 0  2*q2   2*q3   2*q0  2*q1 0 0 0 0 0 0;
-                         0 0 0 0 0 0 -2*q1  -2*q0   2*q3  2*q2 0 0 0 0 0 0;
-                         0 0 0 0 0 0  2*q0  -2*q1  -2*q2  2*q3 0 0 0 0 0 0];
+            H_x_accel = [0 0 0 0 0 0 -2*q2  2*q3 -2*q0 2*q1 0 0 0 0 0 0;
+                         0 0 0 0 0 0  2*q1  2*q0  2*q3 2*q2 0 0 0 0 0 0;
+                         0 0 0 0 0 0  2*q0 -2*q1 -2*q2 2*q3 0 0 0 0 0 0];
                    
             Q_delte_theta = 0.5 * [-q1 -q2 -q3;
                                     q0 -q3  q2;
@@ -401,8 +368,8 @@ classdef eskf_estimator
             H_accel = H_x_accel * X_delta_x;
 
             %prediction of gravity vector using gyroscope
-            h_accel = [2 * (q0*q2 + q1*q3);
-                       2 * (q2*q3 - q0*q1);
+            h_accel = [2*(q1*q3 - q0*q2);
+                       2*(q2*q3 + q0*q1);
                        q0*q0 - q1*q1 - q2*q2 + q3*q3];
             
             %calculate kalman gain
@@ -623,12 +590,9 @@ classdef eskf_estimator
             gamma = sqrt(mag(1)*mag(1) + mag(2)*mag(2));
             
             %error state observation matrix of accelerometer
-            H_x_mag = [0 0 0 0 0 0 2*(+gamma*q0 + mag(3)*q2) 2*(+gamma*q1 + mag(3)*q3) 2*(-gamma*q2 + mag(3)*q0) ...
-                                   2*(-gamma*q3 + mag(3)*q1) 0 0 0 0 0 0;
-                       0 0 0 0 0 0 2*(+gamma*q3 - mag(3)*q1) 2*(+gamma*q2 - mag(3)*q0) 2*(+gamma*q1 + mag(3)*q3) ...
-                                   2*(+gamma*q0 + mag(3)*q2) 0 0 0 0 0 0;
-                       0 0 0 0 0 0 2*(-gamma*q2 + mag(3)*q0) 2*(+gamma*q3 - mag(3)*q1) 2*(-gamma*q0 - mag(3)*q2) ...
-                                   2*(+gamma*q1 + mag(3)*q3) 0 0 0 0 0 0];
+            H_x_mag = [0 0 0 0 0 0 2*(+gamma*q0 - mz*q2) 2*(+gamma*q1 + mz*q3) 2*(-gamma*q2 - mz*q0) 2*(-gamma*q3 + mz*q1) 0 0 0 0 0 0;
+                       0 0 0 0 0 0 2*(-gamma*q3 + mz*q1) 2*(+gamma*q2 + mz*q0) 2*(+gamma*q1 + mz*q3) 2*(-gamma*q0 + mz*q2) 0 0 0 0 0 0;
+                       0 0 0 0 0 0 2*(+gamma*q2 + mz*q0) 2*(+gamma*q3 - mz*q1) 2*(+gamma*q0 - mz*q2) 2*(+gamma*q1 + mz*q3) 0 0 0 0 0 0];
 
             Q_delte_theta = 0.5 * [-q1 -q2 -q3;
                                     q0 -q3  q2;
@@ -643,9 +607,9 @@ classdef eskf_estimator
             H_mag = H_x_mag * X_delta_x;
 
             %prediction of magnetic field vector using gyroscope
-            h_mag = [gamma*(q0*q0 + q1*q1 - q2*q2 - q3*q3) + 2*mag(3)*(q0*q2 + q1*q3);
-                     2*gamma*(q1*q2 + q0*q3) + 2*mag(3)*(q2*q3 - q0*q1);
-                     2*gamma*(q1*q3 - q0*q2) + mag(3)*(q0*q0 - q1*q1 - q2*q2 + q3*q3)];
+            h_mag = [gamma*(q0*q0 + q1*q1 - q2*q2 - q3*q3) + 2*mz*(q1*q3 - q0*q2);
+                     2*(gamma*(q1*q2 - q0*q3) + mz*(q2*q3 + q0*q1));
+                     2*gamma*(q1*q3 - q0*q2) + mz*(q0*q0 - q1*q1 - q2*q2 + q3*q3)];
             
             %calculate kalman gain
             H_mag_t = H_mag.';
