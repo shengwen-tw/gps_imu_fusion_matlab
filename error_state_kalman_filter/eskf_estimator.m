@@ -79,9 +79,9 @@ classdef eskf_estimator
              0 0 0 0 0 0 5 0 0 0 0 0 0 0 0;     %delta_x
              0 0 0 0 0 0 0 5 0 0 0 0 0 0 0;     %delta_y
              0 0 0 0 0 0 0 0 5 0 0 0 0 0 0;     %delta_z
-             0 0 0 0 0 0 0 0 0 1e-6 0 0 0 0 0;  %delta a_b_x
-             0 0 0 0 0 0 0 0 0 0 1e-6 0 0 0 0;  %delta a_b_y
-             0 0 0 0 0 0 0 0 0 0 0 1e-6 0 0 0;  %delta a_b_z
+             0 0 0 0 0 0 0 0 0 1e-3 0 0 0 0 0;  %delta a_b_x
+             0 0 0 0 0 0 0 0 0 0 1e-3 0 0 0 0;  %delta a_b_y
+             0 0 0 0 0 0 0 0 0 0 0 1e-3 0 0 0;  %delta a_b_z
              0 0 0 0 0 0 0 0 0 0 0 0 1e-6 0 0;  %delta w_b_x
              0 0 0 0 0 0 0 0 0 0 0 0 0 1e-6 0;  %delta w_b_y
              0 0 0 0 0 0 0 0 0 0 0 0 0 0 1e-6]; %delta w_b_z
@@ -251,9 +251,9 @@ classdef eskf_estimator
         end
         
         function ret_obj = predict(obj, ax, ay, az, wx, wy, wz, dt)
-            ax = ax;% - obj.x_nominal(11);
-            ay = ay;% - obj.x_nominal(12);
-            az = az;% - obj.x_nominal(13);
+            ax = ax - obj.x_nominal(11);
+            ay = ay - obj.x_nominal(12);
+            az = az - obj.x_nominal(13);
             wx = wx;% - obj.x_nominal(14);
             wy = wy;% - obj.x_nominal(15);
             wz = wz;% - obj.x_nominal(16);
