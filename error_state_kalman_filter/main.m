@@ -107,10 +107,10 @@ for i = 2: data_num
     
     %eskf correction from gravity vector
     %change P(w_b) to 1e-6 for model 1, 1e-4 for model 2 
-    eskf = eskf.accel_correct1(accel_lpf_x(i), accel_lpf_y(i), accel_lpf_z(i), ...
-                               gyro_raw_x(i), gyro_raw_y(i), gyro_raw_z(i));
-    %eskf = eskf.accel_correct2(accel_lpf_x(i), accel_lpf_y(i), accel_lpf_z(i), ...
+    %eskf = eskf.accel_correct1(accel_lpf_x(i), accel_lpf_y(i), accel_lpf_z(i), ...
     %                           gyro_raw_x(i), gyro_raw_y(i), gyro_raw_z(i));
+    eskf = eskf.accel_correct2(accel_lpf_x(i), accel_lpf_y(i), accel_lpf_z(i), ...
+                               gyro_raw_x(i), gyro_raw_y(i), gyro_raw_z(i));
                            
     gravity = eskf.gravity;
     gravity_x_arr(i) = gravity(1);

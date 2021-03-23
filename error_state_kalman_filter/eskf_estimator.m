@@ -443,9 +443,9 @@ classdef eskf_estimator
             wby = obj.x_nominal(15);
             wbz = obj.x_nominal(16);
             
-            wmx_sub_wbx = wx - wbx;
-            wmy_sub_wby = wy - wby;
-            wmz_sub_wbz = wz - wbz;
+            wmx_sub_wbx = wx;% - wbx;
+            wmy_sub_wby = wy;% - wby;
+            wmz_sub_wbz = wz;% - wbz;
             
             g = obj.g_constant;
             
@@ -462,27 +462,27 @@ classdef eskf_estimator
             dhx_dpz = 0;
             dhy_dpz = 0;
             dhz_dpz = 0;
-            dhx_dvx = 2*wmy_sub_wby*(q1*q3-q0*q2) - 2*wmz_sub_wbz*(q1*q2+q0*q3);
-            dhy_dvx = wmz_sub_wbz*(q0*q0+q1*q1-q2*q2-q3*q3) - 2*wmx_sub_wbx*(q1*q3-q0*q2);
-            dhz_dvx = 2*wmx_sub_wbx*(q1*q2+q0*q3) - wmy_sub_wby*(q0*q0+q1*q1-q2*q2-q3*q3);
-            dhx_dvy = 2*wmy_sub_wby*(q0*q1+q2*q3) - wmz_sub_wbz*(q0*q0-q1*q1+q2*q2-q3*q3);
-            dhy_dvy = 2*wmz_sub_wbz*(q1*q2-q0*q3) - 2*wmx_sub_wbx*(q0*q1 + q2*q3);
-            dhz_dvy = wmx_sub_wbx*(q0*q0-q1*q1+q2*q2-q3*q3) - 2*wmy_sub_wby*(q1*q2-q0*q3);
-            dhx_dvz = wmy_sub_wby*(q0*q0-q1*q1-q2*q2+q3*q3) - 2*wmz_sub_wbz*(q2*q3-q0*q1);
-            dhy_dvz = 2*wmz_sub_wbz*(q0*q2+q1*q3) - wmx_sub_wbx*(q0*q0-q1*q1-q2*q2+q3*q3);
-            dhz_dvz = 2*wmx_sub_wbx*(q2*q3-q0*q1) - 2*wmy_sub_wby*(q0*q2+q1*q3);
-            dhx_dq0 = 2*wmy_sub_wby*(-q2*vx+q1*vy+q0*vz) - 2*wmz_sub_wbz*(q3*vx+q0*vy-q1*vz) - 2*g*q2;
-            dhy_dq0 = 2*wmz_sub_wbz*(q0*vx-q3*vy+q2*vz) - 2*wmx_sub_wbx*(-q2*vx+q1*vy+q0*vz) + 2*g*q1;
-            dhz_dq0 = 2*wmx_sub_wbx*(q3*vx+q0*vy-q1*vz) - 2*wmy_sub_wby*(q0*vx-q3*vy+q2*vz) - 2*g*q0;
-            dhx_dq1 = 2*wmy_sub_wby*(q3*vx+q0*vy-q1*vz) - 2*wmz_sub_wbz*(q2*vx-q1*vy-q0*vz) - 2*g*q3;
-            dhy_dq1 = 2*wmz_sub_wbz*(q1*vx+q2*vy+q3*vz) - 2*wmx_sub_wbx*(q3*vx+q0*vy-q1*vz) + 2*g*q0;
-            dhz_dq1 = 2*wmx_sub_wbx*(q2*vx-q1*vy-q0*vz) - 2*wmy_sub_wby*(q1*vx+q2*vy+q3*vz) + 2*g*q1;
-            dhx_dq2 = 2*wmy_sub_wby*(-q0*vx+q3*vy-q2*vz) - 2*wmz_sub_wbz*(q1*vx+q2*vy+q3*vz) - 2*g*q0;
-            dhy_dq2 = 2*wmz_sub_wbz*(-q2*vx+q1*vy+q0*vz) - 2*wmx_sub_wbx*(-q0*vx+q3*vy-q2*vz) - 2*g*q3;
-            dhz_dq2 = 2*wmx_sub_wbx*(q1*vx+q2*vy+q3*vz) - 2*wmy_sub_wby*(-q2*vx+q1*vy+q0*vz) + 2*g*q2;
-            dhx_dq3 = 2*wmy_sub_wby*(q1*vx+q2*vy+q3*vz) - 2*wmz_sub_wbz*(q0*vx-q3*vy+q2*vz) - 2*g*q1;
-            dhy_dq3 = 2*wmz_sub_wbz*(-q3*vx-q0*vy+q1*vz) - 2*wmx_sub_wbx*(q1*vx+q2*vy+q3*vz) - 2*g*q2;
-            dhz_dq3 = 2*wmx_sub_wbx*(q0*vx-q3*vy+q2*vz) - 2*wmy_sub_wby*(-q3*vx-q0*vy+q1*vz) - 2*g*q3;
+            dhx_dvx = -wmz_sub_wbz*(2*(q1*q2 - q0*q3)) + wmy_sub_wby*(2*(q1*q3 + q0*q2));
+            dhy_dvx = +wmz_sub_wbz*(q0*q0 + q1*q1 - q2*q2 - q3*q3) - wmx_sub_wbx*(2*(q1*q3 + q0*q2));
+            dhz_dvx = -wmy_sub_wby*(q0*q0 + q1*q1 - q2*q2 - q3*q3) + wmx_sub_wbx*(2*(q1*q2 - q0*q3));
+            dhx_dvy = -wmz_sub_wbz*(q0*q0 - q1*q1 + q2*q2 - q3*q3) + wmy_sub_wby*(2*(q2*q3 - q0*q1));
+            dhy_dvy = +wmz_sub_wbz*(2*(q1*q2 + q0*q3)) - wmx_sub_wbx*(2*(q2*q3 - q0*q1));
+            dhz_dvy = -wmy_sub_wby*(2*(q1*q2 + q0*q3)) + wmx_sub_wbx*(q0*q0 - q1*q1 + q2*q2 - q3*q3);
+            dhx_dvz = -wmz_sub_wbz*(2*(q2*q3+ q0*q1)) + wmy_sub_wby*(q0*q0 - q1*q1 - q2*q2 + q3*q3);
+            dhy_dvz = +wmz_sub_wbz*(2*(q1*q3 - q0*q2)) - wmx_sub_wbx*(q0*q0 - q1*q1 - q2*q2 + q3*q3);
+            dhz_dvz = -wmy_sub_wby*(2*(q1*q3 - q0*q2)) + wmx_sub_wbx*(2*(q2*q3 + q0*q1));
+            dhx_dq0 = -wmz_sub_wbz*(-2*q3*vx + 2*q0*vy + 2*q1*vz) + wmy_sub_wby*(2*q2*vx - 2*q1*vy + 2*q0*vz) + 2*g*q2;
+            dhy_dq0 = +wmz_sub_wbz*(2*q0*vx + 2*q3*vy - 2*q2*vz) - wmx_sub_wbx*(2*q2*vx - 2*q1*vy - 2*q0*vz) - 2*g*q1;
+            dhz_dq0 = -wmy_sub_wby*(2*q0*vx + 2*q3*vy - 2*q2*vz) + wmx_sub_wbx*(-2*q3*vx + 2*q0*vy + 2*q1*vz) - 2*g*q0;
+            dhx_dq1 = -wmz_sub_wbz*(2*q2*vx - 2*q1*vy + 2*q0*vz) + wmy_sub_wby*(2*q3*vx - 2*q0*vy - 2*q1*vz) - 2*g*q3;
+            dhy_dq1 = +wmz_sub_wbz*(2*q1*vx + 2*q2*vy + 2*q3*vz) - wmx_sub_wbx*(2*q3*vx - 2*q0*vy - 2*q1*vz) - 2*g*q0;
+            dhz_dq1 = -wmy_sub_wby*(2*q1*vx + 2*q2*vy + 2*q3*vz) + wmx_sub_wbx*(2*q2*vx - 2*q1*vy + 2*q0*vz) + 2*g*q1;
+            dhx_dq2 = -wmz_sub_wbz*(2*q1*vx + 2*q2*vy + 2*q3*vz) + wmy_sub_wby*(2*q0*vx + 2*q3*vy - 2*q2*vz) + 2*g*q0;
+            dhy_dq2 = +wmz_sub_wbz*(-2*q2*vx + 2*q1*vy - 2*q0*vz) - wmx_sub_wbx*(2*q0*vx + 2*q3*vy - 2*q2*vz) - 2*g*q3;
+            dhz_dq2 = -wmy_sub_wby*(-2*q2*vx + 2*q1*vy - 2*q0*vz) + wmx_sub_wbx*(2*q1*vx + 2*q2*vy + 2*q3*vz) + 2*g*q2;
+            dhx_dq3 = -wmz_sub_wbz*(-2*q0*vx - 2*q3*vy + 2*q2*vz) + wmy_sub_wby*(2*q1*vx + 2*q2*vy + 2*q3*vz) - 2*g*q1;
+            dhy_dq3 = +wmz_sub_wbz*(-2*q3*vx + 2*q0*vy + 2*q1*vz) - wmx_sub_wbx*(2*q1*vx + 2*q2*vy + 2*q3*vz) - 2*g*q2;
+            dhz_dq3 = -wmy_sub_wby*(-2*q3*vx + 2*q0*vy - 2*q1*vz) + wmx_sub_wbx*(-2*q0*vx - 2*q3*vy + 2*q2*vz) - 2*g*q3;
             dhx_dabx = 0;
             dhy_dabx = 0;
             dhz_dabx = 0;
@@ -493,13 +493,13 @@ classdef eskf_estimator
             dhy_dabz = 0;
             dhz_dabz = 0;
             dhx_dwbx = 0;
-            dhy_dwbx = 2*(q1*q3-q0*q2)*vx + 2*(q0*q1+q2*q3)*vy + (q0*q0-q1*q1-q2*q2+q3*q3)*vz;
-            dhz_dwbx = -(2*(q1*q2 + q0*q3)*vx + (q0*q0-q1*q1+q2*q2-q3*q3)*vy + 2*(q2*q3-q0*q1)*vz);
-            dhx_dwby = -(2*(q1*q3-q0*q2)*vx + 2*(q0*q1+q2*q3)*vy + (q0*q0-q1*q1-q2*q2+q3*q3)*vz);
+            dhy_dwbx = +(2*(q1*3 + q0*q2)*vx + 2*(q2*q3 - q0*q1)*vy + (q0*q0 - q1*q1 - q2*q2 + q3*q3)*vz);
+            dhz_dwbx = -(2*(q1*q2 - q0*q3)*vx + (q0*q0 - q1*q1 + q2*q2 - q3*q3)*vy + 2*(q2*q3 + q0*q1)*vz);
+            dhx_dwby = -(2*(q1*q3 + q0*q2)*vx + 2*(q2*q3 - q0*q1)*vy + (q0*q0 - q1*q1 - q2*q2 + q3*q3)*vz);
             dhy_dwby = 0;
-            dhz_dwby = (q0*q0+q1*q1-q2*q2-q3*q3)*vx + 2*(q1*q2-q0*q3)*vy + 2*(q0*q2+q1*q3)*vz;
-            dhx_dwbz = 2*(q1*q2+q0*q3)*vx + (q0*q0-q1*q1+q2*q2-q3*q3)*vy + 2*(q2*q3-q0*q1)*vz;
-            dhy_dwbz = -((q0*q0+q1*q1-q2*q2-q3*q3)*vx + 2*(q1*q2-q0*q3)*vy + 2*(q0*q2+q1*q3)*vz);
+            dhz_dwby = +((q0*q0 - q1*q1 - q2*q2 - q3*q3)*vx + 2*(q1*q2 + q0*q3)*vy + 2*(q1*q3 - q0*q2)*vz);
+            dhx_dwbz = +(2*(q1*q2 - q0*q3)*vx + (q0*q0 - q1*q1 + q2*q2 - q3*q3)*vy + 2*(q2*q3 + q0*q1)*vz);
+            dhy_dwbz = -((q0*q0 + q1*q1 - q2*q2 - q3*q3)*vx + 2*(q1*q2 + q0*q3)*vy + 2*(q1*q3 - q0*q2)*vz);
             dhz_dwbz = 0;
             
             H_x_accel = [dhx_dpx dhx_dpy dhx_dpz dhx_dvx dhx_dvy dhx_dvz dhx_dq0 dhx_dq1 dhx_dq2 dhx_dq3 dhx_dabx dhx_daby dhx_dabz dhx_dwbx dhx_dwby dhx_dwbz;
@@ -519,7 +519,7 @@ classdef eskf_estimator
             H_accel = H_x_accel * X_delta_x;
 
             %prediction of gravity vector using gyroscope
-            h_accel = cross([wmx_sub_wbx; wmy_sub_wby; wmz_sub_wbz], obj.R * [vx; vy; vz]) - obj.R * [0; 0; g];
+            h_accel = cross([wmx_sub_wbx; wmy_sub_wby; wmz_sub_wbz], obj.R.' * [vx; vy; vz]) - obj.R.' * [0; 0; g];
 
             %calculate kalman gain
             H_accel_t = H_accel.';
