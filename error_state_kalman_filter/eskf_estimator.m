@@ -87,14 +87,14 @@ classdef eskf_estimator
              0 0 0 0 0 0 0 0 0 0 0 0 0 0 1e-6]; %delta w_b_z
         
         %observation covariance matrix of accelerometer
-        V_accel = [7e-3 0 0;  %ax
-                   0 7e-3 0;  %ay
-                   0 0 7e-3]; %az
+        V_accel = [7e-1 0 0;  %ax
+                   0 7e-1 0;  %ay
+                   0 0 7e-1]; %az
                
         %observation covariance matrix of accelerometer
-        V_mag = [1e-3 0 0;  %mx
-                 0 1e-3 0;  %my
-                 0 0 1e-3]; %mz
+        V_mag = [5e-1 0 0;  %mx
+                 0 5e-1 0;  %my
+                 0 0 5e-1]; %mz
              
         %observation covariance matrix of the gps sensor
         V_gps = [1 0 0 0;  %px
