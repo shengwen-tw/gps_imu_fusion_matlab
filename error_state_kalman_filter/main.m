@@ -95,8 +95,6 @@ accelerometer_norm_arr = zeros(1, data_num);
 gravity_norm_arr = zeros(1, data_num);
 %process covariance matrix of error-state kalman filter
 eskf_P = zeros(15, data_num);
-
-vel_ned_body = [0; 0; 0];
                         
 for i = 2: data_num
     dt = timestamp_s(i) - timestamp_s(i - 1);
@@ -134,8 +132,6 @@ for i = 2: data_num
     fused_enu_vx(i) = eskf.x_nominal(5);
     fused_enu_vy(i) = eskf.x_nominal(4);
     fused_enu_vz(i) = -eskf.x_nominal(6);
-
-    vel_ned_body = eskf.R * [fused_enu_vy(i); fused_enu_vx(i); fused_enu_vz(i)];
     
     %gps, barometer raw signal and transform it into enu frame for
     %visualization
@@ -146,19 +142,19 @@ for i = 2: data_num
     
     %collect rotation vectors for visualization
     if mod(i, b1_visual_sample_cnt) == 0
-        Rt = eskf.R.';
+        R = eskf.R;
         quiver_orig_x(j) = pos_enu(1);
         quiver_orig_y(j) = pos_enu(2);
         quiver_orig_z(j) = pos_enu(3);
-        quiver_b1_u(j) = Rt(2, 1);
-        quiver_b1_v(j) = Rt(1, 1);
-        quiver_b1_w(j) = -Rt(3, 1);
-        quiver_b2_u(j) = Rt(2, 2);
-        quiver_b2_v(j) = Rt(1, 2);
-        quiver_b2_w(j) = -Rt(3, 2);
-        quiver_b3_u(j) = Rt(2, 3);
-        quiver_b3_v(j) = Rt(1, 3);
-        quiver_b3_w(j) = -Rt(3, 3);
+        quiver_b1_u(j) = R(2, 1);
+        quiver_b1_v(j) = R(1, 1);
+        quiver_b1_w(j) = -R(3, 1);
+        quiver_b2_u(j) = R(2, 2);
+        quiver_b2_v(j) = R(1, 2);
+        quiver_b2_w(j) = -R(3, 2);
+        quiver_b3_u(j) = R(2, 3);
+        quiver_b3_v(j) = R(1, 3);
+        quiver_b3_w(j) = -R(3, 3);
         j = j + 1;
     end
     
