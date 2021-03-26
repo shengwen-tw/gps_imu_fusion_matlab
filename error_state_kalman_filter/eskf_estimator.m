@@ -346,7 +346,7 @@ classdef eskf_estimator
             
             %in model1, the measurement vector is gravity instead of
             %accelerometer measurement
-            w_cross_v = cross([wx; wy; wz], [vx; vy; vz]);
+            w_cross_v = cross([wx; wy; wz], obj.R.' * [vx; vy; vz]);
             gravity = w_cross_v - [ax; ay; az];
             
             %plot gravity = cross(w, v) - am
