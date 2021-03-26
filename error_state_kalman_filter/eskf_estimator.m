@@ -251,22 +251,19 @@ classdef eskf_estimator
         end
         
         function ret_obj = predict(obj, ax, ay, az, wx, wy, wz, dt)
-            ax = ax - obj.x_nominal(11);
-            ay = ay - obj.x_nominal(12);
-            az = az - obj.x_nominal(13);
-            wx = wx;% - obj.x_nominal(14);
-            wy = wy;% - obj.x_nominal(15);
-            wz = wz;% - obj.x_nominal(16);
+            %calculate am - ab
+            am_sub_ab = [ax - obj.x_nominal(11);
+                         ay - obj.x_nominal(12);
+                         az - obj.x_nominal(13)];
+            %calculate wm - wb
+            wm_sub_wb = [wx - obj.x_nominal(14);
+                         wy - obj.x_nominal(15);
+                         wz - obj.x_nominal(16)];
             
-            %convert accelerometer's reading from body-fixed frame to
-            %inertial frame
-            a_inertial = obj.R * [ax; ay; az];
+            %calculate R*(am - ab) + g
+            R_am_ab_g = obj.R * am_sub_ab + [0; 0; obj.g_constant];
             
-            %get translational acceleration from accelerometer
-            a = [a_inertial(1);
-                 a_inertial(2);
-                 a_inertial(3) + obj.g_constant];
-            
+            %nominal state of last time step
             x_last = obj.x_nominal(1:3);
             v_last = obj.x_nominal(4:6);
             q_last = obj.x_nominal(7:10);
@@ -274,42 +271,45 @@ classdef eskf_estimator
             w_b_last = obj.x_nominal(14: 16);
             
             %first derivative of the quaternion
-            w = [0; wx; wy; wz];
-            q_dot = obj.quaternion_mult(q_last, w);
+            q_dot = obj.quaternion_mult(q_last, [0; wm_sub_wb(1); wm_sub_wb(2); wm_sub_wb(3)]);
             
             %nominal state update
             half_dt = 0.5 * dt;
             half_dt_squared = 0.5 * (dt * dt);
-            q_integration = [q_last(1) + q_dot(1) * half_dt;
-                             q_last(2) + q_dot(2) * half_dt;
-                             q_last(3) + q_dot(3) * half_dt;
-                             q_last(4) + q_dot(4) * half_dt];
-            q_integration = obj.quat_normalize(q_integration);
-            obj.x_nominal = [x_last(1) + (v_last(1) * dt) + (a(1) * half_dt_squared); %px
-                             x_last(2) + (v_last(2) * dt) + (a(2) * half_dt_squared); %py
-                             x_last(3) + (v_last(3) * dt) + (a(3) * half_dt_squared); %pz
-                             v_last(1) + (a(1) * dt); %vx
-                             v_last(2) + (a(2) * dt); %vy
-                             v_last(3) + (a(3) * dt); %vz
-                             q_integration(1);        %q0
-                             q_integration(2);        %q1
-                             q_integration(3);        %q2
-                             q_integration(4);        %q3
-                             a_b_last(1);             %a_b_x
-                             a_b_last(2);             %a_b_y
-                             a_b_last(3);             %a_b_z
-                             w_b_last(1);             %w_b_x
-                             w_b_last(2);             %w_b_y
-                             w_b_last(3)];            %w_b_z
+            
+            %numerical integration
+            q_next = q_last + (q_dot .* half_dt);
+            q_next = obj.quat_normalize(q_next);
+            v_next = v_last + (R_am_ab_g .* dt);
+            p_next = x_last + (v_next .* dt) + (R_am_ab_g .* half_dt_squared);
+            a_b_next = a_b_last;
+            w_b_next = w_b_last;
+            
+            obj.x_nominal = [p_next(1);
+                             p_next(2);
+                             p_next(3);
+                             v_next(1);
+                             v_next(2);
+                             v_next(3);
+                             q_next(1);
+                             q_next(2);
+                             q_next(3);
+                             q_next(4);
+                             a_b_next(1);
+                             a_b_next(2);
+                             a_b_next(3);
+                             w_b_next(1);
+                             w_b_next(2);
+                             w_b_next(3)];
                          
             %error state update
             F_x = zeros(15, 15);
             F_x(1:3, 1:3) = obj.I_3x3;
             F_x(1:3, 4:6) = obj.I_3x3 .* dt;
             F_x(4:6, 4:6) = obj.I_3x3;
-            F_x(4:6, 7:9) = -obj.R * obj.hat_map_3x3(a) * dt;
+            F_x(4:6, 7:9) = -obj.R * obj.hat_map_3x3(am_sub_ab) * dt;
             F_x(4:6, 10:12) = -obj.R .* dt;
-            F_x(7:9, 7:9) = obj.I_3x3 - obj.hat_map_3x3([wx; wy; wz] .* dt);
+            F_x(7:9, 7:9) = obj.I_3x3 - obj.hat_map_3x3(wm_sub_wb .* dt);
             F_x(7:9, 13:15) = -obj.I_3x3 .* dt;
             F_x(10:12, 10:12) = obj.I_3x3;
             F_x(13:15, 13:15) = obj.I_3x3;
