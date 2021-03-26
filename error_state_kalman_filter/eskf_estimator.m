@@ -51,10 +51,6 @@ classdef eskf_estimator
         R = eye(3);  %body-fixed frame to inertial frame
         Rt = eye(3); %inertial frame to body-fixed frame
         
-        %noise parameters
-        V_i = [];     %white noise standard deviation of the acceleromter
-        Theta_i = []; %white noise standard deviation of the gyroscope
-        
         %covariance matrix of process white noise
         Q_i = [1e-5 0 0 0 0 0 0 0 0 0 0 0;   %noise of ax
                0 1e-5 0 0 0 0 0 0 0 0 0 0;   %noise of ay
@@ -79,9 +75,9 @@ classdef eskf_estimator
              0 0 0 0 0 0 5 0 0 0 0 0 0 0 0;     %delta_x
              0 0 0 0 0 0 0 5 0 0 0 0 0 0 0;     %delta_y
              0 0 0 0 0 0 0 0 5 0 0 0 0 0 0;     %delta_z
-             0 0 0 0 0 0 0 0 0 1e-3 0 0 0 0 0;  %delta a_b_x
-             0 0 0 0 0 0 0 0 0 0 1e-3 0 0 0 0;  %delta a_b_y
-             0 0 0 0 0 0 0 0 0 0 0 1e-3 0 0 0;  %delta a_b_z
+             0 0 0 0 0 0 0 0 0 1 0 0 0 0 0;  %delta a_b_x
+             0 0 0 0 0 0 0 0 0 0 1 0 0 0 0;  %delta a_b_y
+             0 0 0 0 0 0 0 0 0 0 0 1e-2 0 0 0;  %delta a_b_z
              0 0 0 0 0 0 0 0 0 0 0 0 1e-6 0 0;  %delta w_b_x
              0 0 0 0 0 0 0 0 0 0 0 0 0 1e-6 0;  %delta w_b_y
              0 0 0 0 0 0 0 0 0 0 0 0 0 0 1e-6]; %delta w_b_z
@@ -256,9 +252,9 @@ classdef eskf_estimator
                          ay - obj.x_nominal(12);
                          az - obj.x_nominal(13)];
             %calculate wm - wb
-            wm_sub_wb = [wx - obj.x_nominal(14);
-                         wy - obj.x_nominal(15);
-                         wz - obj.x_nominal(16)];
+            wm_sub_wb = [wx;% - obj.x_nominal(14);
+                         wy;% - obj.x_nominal(15);
+                         wz];% - obj.x_nominal(16)];
             
             %calculate R*(am - ab) + g
             R_am_ab_g = obj.R * am_sub_ab + [0; 0; obj.g_constant];
@@ -451,9 +447,9 @@ classdef eskf_estimator
             wbz = obj.x_nominal(16);
             
             %am - ab
-            amx_sub_abx = ax;% - abx;
-            amy_sub_aby = ay;% - aby;
-            amz_sub_abz = az;% - abz;
+            amx_sub_abx = ax - abx;
+            amy_sub_aby = ay - aby;
+            amz_sub_abz = az - abz;
             
             %wm - wb
             wmx_sub_wbx = wx;% - wbx;
