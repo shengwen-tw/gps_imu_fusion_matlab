@@ -333,22 +333,27 @@ classdef eskf_estimator
         end
         
         function ret_obj = accel_correct1(obj, ax, ay, az, wx, wy, wz)
-            %calculate gravity vector
+            %notice that accelerometer and gyroscope bias are ignored in
+            %model1
+            
             vx = obj.x_nominal(4);
             vy = obj.x_nominal(5);
             vz = obj.x_nominal(6);
-            accel_translational = cross([wx; wy; wz], [vx; vy; vz]);
-            gravity = accel_translational - [ax; ay; az];
-            
-            obj.gravity = gravity;
-            
-            %normalize gravity vector
-            y_accel = gravity / norm(gravity);
-            
             q0 = obj.x_nominal(7);
             q1 = obj.x_nominal(8);
             q2 = obj.x_nominal(9);
             q3 = obj.x_nominal(10);
+            
+            %in model1, the measurement vector is gravity instead of
+            %accelerometer measurement
+            w_cross_v = cross([wx; wy; wz], [vx; vy; vz]);
+            gravity = w_cross_v - [ax; ay; az];
+            
+            %plot gravity = cross(w, v) - am
+            obj.gravity = gravity;
+            
+            %normalize gravity vector
+            y_accel = gravity / norm(gravity);
             
             %error state observation matrix of accelerometer
             H_x_accel = [0 0 0 0 0 0 -2*q2  2*q3 -2*q0 2*q1 0 0 0 0 0 0;
@@ -429,28 +434,38 @@ classdef eskf_estimator
         end
         
         function ret_obj = accel_correct2(obj, ax, ay, az, wx, wy, wz)
-            %normalize gravity vector
+            obj.gravity = [0; 0; 0]; %gravity estimation is not valid in acceleromter correction model 2 
+            
             vx = obj.x_nominal(4);
             vy = obj.x_nominal(5);
             vz = obj.x_nominal(6);
-            
             q0 = obj.x_nominal(7);
             q1 = obj.x_nominal(8);
             q2 = obj.x_nominal(9);
             q3 = obj.x_nominal(10);
-            
+            abx = obj.x_nominal(11);
+            aby = obj.x_nominal(12);
+            abz = obj.x_nominal(13);
             wbx = obj.x_nominal(14);
             wby = obj.x_nominal(15);
             wbz = obj.x_nominal(16);
             
+            %am - ab
+            amx_sub_abx = ax;% - abx;
+            amy_sub_aby = ay;% - aby;
+            amz_sub_abz = az;% - abz;
+            
+            %wm - wb
             wmx_sub_wbx = wx;% - wbx;
             wmy_sub_wby = wy;% - wby;
             wmz_sub_wbz = wz;% - wbz;
             
             g = obj.g_constant;
             
-            y_accel = [ax; ay; az];
-            obj.gravity = [0; 0; 0]; %gravity estimation is not valid in acceleromter correction model 2 
+            %measurement
+            y_accel = [amx_sub_abx;
+                       amy_sub_aby;
+                       amz_sub_abz];
                         
             %error state observation matrix of accelerometer
             dhx_dpx = 0;
