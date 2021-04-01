@@ -405,11 +405,21 @@ classdef eskf_estimator
                            delta_theta_z];
             end
             
+            %error state injection
+            %obj.x_nominal(1) = obj.x_nominal(1) + obj.delta_x(1);    %px
+            %obj.x_nominal(2) = obj.x_nominal(2) + obj.delta_x(2);    %py
+            %obj.x_nominal(3) = obj.x_nominal(3) + obj.delta_x(3);    %pz
+            %obj.x_nominal(4) = obj.x_nominal(4) + obj.delta_x(4);    %vx
+            %obj.x_nominal(5) = obj.x_nominal(5) + obj.delta_x(5);    %vy
+            %obj.x_nominal(6) = obj.x_nominal(6) + obj.delta_x(6);    %vz
             obj.x_nominal(7:10) = obj.quaternion_mult(obj.x_nominal(7:10), q_error);
             obj.x_nominal(7:10) = obj.quat_normalize(obj.x_nominal(7:10));
-            obj.x_nominal(14) = obj.x_nominal(14) + obj.delta_x(13); %w_b_x
-            obj.x_nominal(15) = obj.x_nominal(15) + obj.delta_x(14); %w_b_y
-            obj.x_nominal(16) = obj.x_nominal(16) + obj.delta_x(15); %w_b_z
+            %obj.x_nominal(11) = obj.x_nominal(11) + obj.delta_x(10); %a_b_x
+            %obj.x_nominal(12) = obj.x_nominal(12) + obj.delta_x(11); %a_b_y
+            %obj.x_nominal(13) = obj.x_nominal(13) + obj.delta_x(12); %a_b_z
+            obj.x_nominal(14) = obj.x_nominal(14) + obj.delta_x(13);  %w_b_x
+            obj.x_nominal(15) = obj.x_nominal(15) + obj.delta_x(14);  %w_b_y
+            obj.x_nominal(16) = obj.x_nominal(16) + obj.delta_x(15);  %w_b_z
             
             %error state reset
             if 1
@@ -564,8 +574,18 @@ classdef eskf_estimator
                            delta_theta_z];
             end
             
+            %error state injection
+            obj.x_nominal(1) = obj.x_nominal(1) + obj.delta_x(1);    %px
+            obj.x_nominal(2) = obj.x_nominal(2) + obj.delta_x(2);    %py
+            obj.x_nominal(3) = obj.x_nominal(3) + obj.delta_x(3);    %pz
+            obj.x_nominal(4) = obj.x_nominal(4) + obj.delta_x(4);    %vx
+            obj.x_nominal(5) = obj.x_nominal(5) + obj.delta_x(5);    %vy
+            obj.x_nominal(6) = obj.x_nominal(6) + obj.delta_x(6);    %vz
             obj.x_nominal(7:10) = obj.quaternion_mult(obj.x_nominal(7:10), q_error);
             obj.x_nominal(7:10) = obj.quat_normalize(obj.x_nominal(7:10));
+            obj.x_nominal(11) = obj.x_nominal(11) + obj.delta_x(10); %a_b_x
+            obj.x_nominal(12) = obj.x_nominal(12) + obj.delta_x(11); %a_b_y
+            obj.x_nominal(13) = obj.x_nominal(13) + obj.delta_x(12); %a_b_z
             obj.x_nominal(14) = obj.x_nominal(14) + obj.delta_x(13); %w_b_x
             obj.x_nominal(15) = obj.x_nominal(15) + obj.delta_x(14); %w_b_y
             obj.x_nominal(16) = obj.x_nominal(16) + obj.delta_x(15); %w_b_z
@@ -654,11 +674,21 @@ classdef eskf_estimator
                            delta_theta_z];
             end
             
+            %error state injection
+            %obj.x_nominal(1) = obj.x_nominal(1) + obj.delta_x(1);     %px
+            %obj.x_nominal(2) = obj.x_nominal(2) + obj.delta_x(2);     %py
+            %obj.x_nominal(3) = obj.x_nominal(3) + obj.delta_x(3);     %pz
+            %obj.x_nominal(4) = obj.x_nominal(4) + obj.delta_x(4);     %vx
+            %obj.x_nominal(5) = obj.x_nominal(5) + obj.delta_x(5);     %vy
+            %obj.x_nominal(6) = obj.x_nominal(6) + obj.delta_x(6);     %vz
             obj.x_nominal(7:10) = obj.quaternion_mult(obj.x_nominal(7:10), q_error);
             obj.x_nominal(7:10) = obj.quat_normalize(obj.x_nominal(7:10));
-            obj.x_nominal(14) = obj.x_nominal(14) + obj.delta_x(13); %w_b_x
-            obj.x_nominal(15) = obj.x_nominal(15) + obj.delta_x(14); %w_b_y
-            obj.x_nominal(16) = obj.x_nominal(16) + obj.delta_x(15); %w_b_z
+            %obj.x_nominal(11) = obj.x_nominal(11) + obj.delta_x(10);  %a_b_x
+            %obj.x_nominal(12) = obj.x_nominal(12) + obj.delta_x(11);  %a_b_y
+            %obj.x_nominal(13) = obj.x_nominal(13) + obj.delta_x(12);  %a_b_z
+            obj.x_nominal(14) = obj.x_nominal(14) + obj.delta_x(13);  %w_b_x
+            obj.x_nominal(15) = obj.x_nominal(15) + obj.delta_x(14);  %w_b_y
+            obj.x_nominal(16) = obj.x_nominal(16) + obj.delta_x(15);  %w_b_z
             
             %error state reset
             if 1
@@ -728,16 +758,20 @@ classdef eskf_estimator
             obj.P = (obj.I_15x15 - K_gps*H_gps) * obj.P;
             
             %error state injection
-            obj.x_nominal(1) = obj.x_nominal(1) + obj.delta_x(1);     %px
-            obj.x_nominal(2) = obj.x_nominal(2) + obj.delta_x(2);     %py
-            obj.x_nominal(4) = obj.x_nominal(4) + obj.delta_x(4);     %vx
-            obj.x_nominal(5) = obj.x_nominal(5) + obj.delta_x(5);     %vy
-            obj.x_nominal(11) = obj.x_nominal(11) + obj.delta_x(10);  %a_b_x
-            obj.x_nominal(12) = obj.x_nominal(12) + obj.delta_x(11);  %a_b_y
-            %obj.x_nominal(13) = obj.x_nominal(13) + obj.delta_x(12); %a_b_z
-            obj.x_nominal(14) = obj.x_nominal(14) + obj.delta_x(13);  %w_b_x
-            obj.x_nominal(15) = obj.x_nominal(15) + obj.delta_x(14);  %w_b_y
-            obj.x_nominal(16) = obj.x_nominal(16) + obj.delta_x(15);  %w_b_z
+            obj.x_nominal(1) = obj.x_nominal(1) + obj.delta_x(1);    %px
+            obj.x_nominal(2) = obj.x_nominal(2) + obj.delta_x(2);    %py
+            obj.x_nominal(3) = obj.x_nominal(3) + obj.delta_x(3);    %pz
+            obj.x_nominal(4) = obj.x_nominal(4) + obj.delta_x(4);    %vx
+            obj.x_nominal(5) = obj.x_nominal(5) + obj.delta_x(5);    %vy
+            obj.x_nominal(6) = obj.x_nominal(6) + obj.delta_x(6);    %vz
+            %obj.x_nominal(7:10) = obj.quaternion_mult(obj.x_nominal(7:10), q_error);
+            %obj.x_nominal(7:10) = obj.quat_normalize(obj.x_nominal(7:10));
+            obj.x_nominal(11) = obj.x_nominal(11) + obj.delta_x(10); %a_b_x
+            obj.x_nominal(12) = obj.x_nominal(12) + obj.delta_x(11); %a_b_y
+            obj.x_nominal(13) = obj.x_nominal(13) + obj.delta_x(12); %a_b_z
+            obj.x_nominal(14) = obj.x_nominal(14) + obj.delta_x(13); %w_b_x
+            obj.x_nominal(15) = obj.x_nominal(15) + obj.delta_x(14); %w_b_y
+            obj.x_nominal(16) = obj.x_nominal(16) + obj.delta_x(15); %w_b_z
             
             %error state reset
             G = obj.I_15x15;
@@ -788,14 +822,20 @@ classdef eskf_estimator
             obj.P = (obj.I_15x15 - K_height*H_height) * obj.P;
             
             %error state injection
-            obj.x_nominal(3) = obj.x_nominal(3) + obj.delta_x(3);     %pz
-            obj.x_nominal(6) = obj.x_nominal(6) + obj.delta_x(6);     %vz
-            %obj.x_nominal(11) = obj.x_nominal(11) + obj.delta_x(10); %a_b_x
-            %obj.x_nominal(12) = obj.x_nominal(12) + obj.delta_x(11); %a_b_y
-            obj.x_nominal(13) = obj.x_nominal(13) + obj.delta_x(12);  %a_b_z
-            obj.x_nominal(14) = obj.x_nominal(14) + obj.delta_x(13);  %w_b_x
-            obj.x_nominal(15) = obj.x_nominal(15) + obj.delta_x(14);  %w_b_y
-            obj.x_nominal(16) = obj.x_nominal(16) + obj.delta_x(15);  %w_b_z
+            obj.x_nominal(1) = obj.x_nominal(1) + obj.delta_x(1);    %px
+            obj.x_nominal(2) = obj.x_nominal(2) + obj.delta_x(2);    %py
+            obj.x_nominal(3) = obj.x_nominal(3) + obj.delta_x(3);    %pz
+            obj.x_nominal(4) = obj.x_nominal(4) + obj.delta_x(4);    %vx
+            obj.x_nominal(5) = obj.x_nominal(5) + obj.delta_x(5);    %vy
+            obj.x_nominal(6) = obj.x_nominal(6) + obj.delta_x(6);    %vz
+            %obj.x_nominal(7:10) = obj.quaternion_mult(obj.x_nominal(7:10), q_error);
+            %obj.x_nominal(7:10) = obj.quat_normalize(obj.x_nominal(7:10));
+            obj.x_nominal(11) = obj.x_nominal(11) + obj.delta_x(10); %a_b_x
+            obj.x_nominal(12) = obj.x_nominal(12) + obj.delta_x(11); %a_b_y
+            obj.x_nominal(13) = obj.x_nominal(13) + obj.delta_x(12); %a_b_z
+            obj.x_nominal(14) = obj.x_nominal(14) + obj.delta_x(13); %w_b_x
+            obj.x_nominal(15) = obj.x_nominal(15) + obj.delta_x(14); %w_b_y
+            obj.x_nominal(16) = obj.x_nominal(16) + obj.delta_x(15); %w_b_z
             
             %error state reset
             G = obj.I_15x15;
