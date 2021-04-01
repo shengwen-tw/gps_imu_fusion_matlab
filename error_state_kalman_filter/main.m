@@ -428,18 +428,18 @@ ylabel('a_b_z [m/s^2]');
 %gyroscope bias
 figure('Name', 'gyroscope bias (NED)');
 subplot (3, 1, 1);
-plot(timestamp_s, gyro_bias_x);
+plot(timestamp_s, rad2deg(gyro_bias_x));
 title('gyroscope bias (NED)');
 xlabel('time [s]');
-ylabel('w_b_x [rad/s]');
+ylabel('w_b_x [deg/s]');
 subplot (3, 1, 2);
-plot(timestamp_s, gyro_bias_y);
+plot(timestamp_s, rad2deg(gyro_bias_y));
 xlabel('time [s]');
-ylabel('w_b_y [rad/s]');
+ylabel('w_b_y [deg/s]');
 subplot (3, 1, 3);
-plot(timestamp_s, gyro_bias_z);
+plot(timestamp_s, rad2deg(gyro_bias_z));
 xlabel('time [s]');
-ylabel('w_b_z [rad/s]');
+ylabel('w_b_z [deg/s]');
 
 %raw position vs fused position
 figure('Name', 'raw position and fused position (enu frame)');
