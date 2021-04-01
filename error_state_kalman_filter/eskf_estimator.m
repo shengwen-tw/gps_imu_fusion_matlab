@@ -412,8 +412,8 @@ classdef eskf_estimator
             %obj.x_nominal(4) = obj.x_nominal(4) + obj.delta_x(4);    %vx
             %obj.x_nominal(5) = obj.x_nominal(5) + obj.delta_x(5);    %vy
             %obj.x_nominal(6) = obj.x_nominal(6) + obj.delta_x(6);    %vz
-            obj.x_nominal(7:10) = obj.quaternion_mult(obj.x_nominal(7:10), q_error);
-            obj.x_nominal(7:10) = obj.quat_normalize(obj.x_nominal(7:10));
+            obj.x_nominal(7:10) = obj.quaternion_mult(obj.x_nominal(7:10), q_error); %q
+            obj.x_nominal(7:10) = obj.quat_normalize(obj.x_nominal(7:10));           %q
             %obj.x_nominal(11) = obj.x_nominal(11) + obj.delta_x(10); %a_b_x
             %obj.x_nominal(12) = obj.x_nominal(12) + obj.delta_x(11); %a_b_y
             %obj.x_nominal(13) = obj.x_nominal(13) + obj.delta_x(12); %a_b_z
@@ -581,8 +581,8 @@ classdef eskf_estimator
             obj.x_nominal(4) = obj.x_nominal(4) + obj.delta_x(4);    %vx
             obj.x_nominal(5) = obj.x_nominal(5) + obj.delta_x(5);    %vy
             obj.x_nominal(6) = obj.x_nominal(6) + obj.delta_x(6);    %vz
-            obj.x_nominal(7:10) = obj.quaternion_mult(obj.x_nominal(7:10), q_error);
-            obj.x_nominal(7:10) = obj.quat_normalize(obj.x_nominal(7:10));
+            obj.x_nominal(7:10) = obj.quaternion_mult(obj.x_nominal(7:10), q_error); %q
+            obj.x_nominal(7:10) = obj.quat_normalize(obj.x_nominal(7:10));           %q
             obj.x_nominal(11) = obj.x_nominal(11) + obj.delta_x(10); %a_b_x
             obj.x_nominal(12) = obj.x_nominal(12) + obj.delta_x(11); %a_b_y
             obj.x_nominal(13) = obj.x_nominal(13) + obj.delta_x(12); %a_b_z
@@ -681,8 +681,8 @@ classdef eskf_estimator
             %obj.x_nominal(4) = obj.x_nominal(4) + obj.delta_x(4);     %vx
             %obj.x_nominal(5) = obj.x_nominal(5) + obj.delta_x(5);     %vy
             %obj.x_nominal(6) = obj.x_nominal(6) + obj.delta_x(6);     %vz
-            obj.x_nominal(7:10) = obj.quaternion_mult(obj.x_nominal(7:10), q_error);
-            obj.x_nominal(7:10) = obj.quat_normalize(obj.x_nominal(7:10));
+            obj.x_nominal(7:10) = obj.quaternion_mult(obj.x_nominal(7:10), q_error); %q
+            obj.x_nominal(7:10) = obj.quat_normalize(obj.x_nominal(7:10));           %q
             %obj.x_nominal(11) = obj.x_nominal(11) + obj.delta_x(10);  %a_b_x
             %obj.x_nominal(12) = obj.x_nominal(12) + obj.delta_x(11);  %a_b_y
             %obj.x_nominal(13) = obj.x_nominal(13) + obj.delta_x(12);  %a_b_z
@@ -758,14 +758,34 @@ classdef eskf_estimator
             obj.P = (obj.I_15x15 - K_gps*H_gps) * obj.P;
             
             %error state injection
+            delta_theta_x = obj.delta_x(7);
+            delta_theta_y = obj.delta_x(8);
+            delta_theta_z = obj.delta_x(9);
+            
+            if 1
+            	q_error = [1;
+            	           0.5 * delta_theta_x;
+                           0.5 * delta_theta_y;
+                           0.5 * delta_theta_z];
+            else
+                delta_theta_norm = sqrt(delta_theta_x * delta_theta_x + ...
+                                        delta_theta_y * delta_theta_y + ...
+                                        delta_theta_z * delta_theta_z);
+                q_error = [cos(delta_theta_norm / 2);
+                           delta_theta_x;
+                           delta_theta_y;
+                           delta_theta_z];
+            end
+            
+            %error state injection
             obj.x_nominal(1) = obj.x_nominal(1) + obj.delta_x(1);    %px
             obj.x_nominal(2) = obj.x_nominal(2) + obj.delta_x(2);    %py
             obj.x_nominal(3) = obj.x_nominal(3) + obj.delta_x(3);    %pz
             obj.x_nominal(4) = obj.x_nominal(4) + obj.delta_x(4);    %vx
             obj.x_nominal(5) = obj.x_nominal(5) + obj.delta_x(5);    %vy
             obj.x_nominal(6) = obj.x_nominal(6) + obj.delta_x(6);    %vz
-            %obj.x_nominal(7:10) = obj.quaternion_mult(obj.x_nominal(7:10), q_error);
-            %obj.x_nominal(7:10) = obj.quat_normalize(obj.x_nominal(7:10));
+            obj.x_nominal(7:10) = obj.quaternion_mult(obj.x_nominal(7:10), q_error); %q
+            obj.x_nominal(7:10) = obj.quat_normalize(obj.x_nominal(7:10));           %q
             obj.x_nominal(11) = obj.x_nominal(11) + obj.delta_x(10); %a_b_x
             obj.x_nominal(12) = obj.x_nominal(12) + obj.delta_x(11); %a_b_y
             obj.x_nominal(13) = obj.x_nominal(13) + obj.delta_x(12); %a_b_z
@@ -822,14 +842,34 @@ classdef eskf_estimator
             obj.P = (obj.I_15x15 - K_height*H_height) * obj.P;
             
             %error state injection
+            delta_theta_x = obj.delta_x(7);
+            delta_theta_y = obj.delta_x(8);
+            delta_theta_z = obj.delta_x(9);
+            
+            if 1
+            	q_error = [1;
+            	           0.5 * delta_theta_x;
+                           0.5 * delta_theta_y;
+                           0.5 * delta_theta_z];
+            else
+                delta_theta_norm = sqrt(delta_theta_x * delta_theta_x + ...
+                                        delta_theta_y * delta_theta_y + ...
+                                        delta_theta_z * delta_theta_z);
+                q_error = [cos(delta_theta_norm / 2);
+                           delta_theta_x;
+                           delta_theta_y;
+                           delta_theta_z];
+            end
+            
+            %error state injection
             obj.x_nominal(1) = obj.x_nominal(1) + obj.delta_x(1);    %px
             obj.x_nominal(2) = obj.x_nominal(2) + obj.delta_x(2);    %py
             obj.x_nominal(3) = obj.x_nominal(3) + obj.delta_x(3);    %pz
             obj.x_nominal(4) = obj.x_nominal(4) + obj.delta_x(4);    %vx
             obj.x_nominal(5) = obj.x_nominal(5) + obj.delta_x(5);    %vy
             obj.x_nominal(6) = obj.x_nominal(6) + obj.delta_x(6);    %vz
-            %obj.x_nominal(7:10) = obj.quaternion_mult(obj.x_nominal(7:10), q_error);
-            %obj.x_nominal(7:10) = obj.quat_normalize(obj.x_nominal(7:10));
+            obj.x_nominal(7:10) = obj.quaternion_mult(obj.x_nominal(7:10), q_error); %q
+            obj.x_nominal(7:10) = obj.quat_normalize(obj.x_nominal(7:10));           %q
             obj.x_nominal(11) = obj.x_nominal(11) + obj.delta_x(10); %a_b_x
             obj.x_nominal(12) = obj.x_nominal(12) + obj.delta_x(11); %a_b_y
             obj.x_nominal(13) = obj.x_nominal(13) + obj.delta_x(12); %a_b_z
