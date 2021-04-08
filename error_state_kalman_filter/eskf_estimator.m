@@ -607,106 +607,8 @@ classdef eskf_estimator
             
             ret_obj = obj;
         end
-
-        function ret_obj = mag_correct1(obj, mx, my, mz)            
-            %normalize magnetic field vector
-            mag = [mx; my; mz];
-            y_mag = mag / norm(mag);
-            
-            q0 = obj.x_nominal(7);
-            q1 = obj.x_nominal(8);
-            q2 = obj.x_nominal(9);
-            q3 = obj.x_nominal(10);
-            
-            
-            %error state observation matrix of accelerometer
-            H_x_mag = [0 0 0 0 0 0 +2*q0 +2*q1 -2*q2 -2*q3 0 0 0 0 0 0;
-                       0 0 0 0 0 0 -2*q3 +2*q2 +2*q1 -2*q0 0 0 0 0 0 0;
-                       0 0 0 0 0 0 +2*q2 +2*q3 +2*q0 +2*q1 0 0 0 0 0 0];
-
-            Q_delte_theta = 0.5 * [-q1 -q2 -q3;
-                                    q0 -q3  q2;
-                                    q3  q0 -q1;
-                                   -q2  q1  q0];
-            X_delta_x = zeros(16, 15);
-            X_delta_x(1:6, 1:6) = obj.I_6x6;
-            X_delta_x(7:10, 7:9) = Q_delte_theta;
-            X_delta_x(11:13, 10:12) = obj.I_3x3;
-            X_delta_x(14:16, 13:15) = obj.I_3x3;
-            
-            H_mag = H_x_mag * X_delta_x;
-
-            %prediction of magnetic field vector using gyroscope
-            h_mag = [q0*q0 + q1*q1 - q2*q2 - q3*q3;
-                     2*(q1*q2 - q0*q3);
-                     2*(q1*q3 + q0*q2)];
-            
-            %calculate kalman gain
-            H_mag_t = H_mag.';
-            PHt_mag = obj.P * H_mag_t;
-            K_mag = PHt_mag / (H_mag * PHt_mag + obj.V_mag);
-            %disp(K_mag);
-            
-            %calculate error state residul
-            obj.delta_x = K_mag * (y_mag - h_mag);
-            
-            %calculate a posteriori process covariance matrix
-            obj.P = (obj.I_15x15 - K_mag*H_mag) * obj.P;
-            
-            %error state injection
-            delta_theta_x = obj.delta_x(7);
-            delta_theta_y = obj.delta_x(8);
-            delta_theta_z = obj.delta_x(9);
-            
-            if 1
-            	q_error = [1;
-            	           0.5 * delta_theta_x;
-                           0.5 * delta_theta_y;
-                           0.5 * delta_theta_z];
-            else
-                delta_theta_norm = sqrt(delta_theta_x * delta_theta_x + ...
-                                        delta_theta_y * delta_theta_y + ...
-                                        delta_theta_z * delta_theta_z);
-                q_error = [cos(delta_theta_norm / 2);
-                           delta_theta_x;
-                           delta_theta_y;
-                           delta_theta_z];
-            end
-            
-            %error state injection
-            obj.x_nominal(1) = obj.x_nominal(1) + obj.delta_x(1);     %px
-            obj.x_nominal(2) = obj.x_nominal(2) + obj.delta_x(2);     %py
-            obj.x_nominal(3) = obj.x_nominal(3) + obj.delta_x(3);     %pz
-            obj.x_nominal(4) = obj.x_nominal(4) + obj.delta_x(4);     %vx
-            obj.x_nominal(5) = obj.x_nominal(5) + obj.delta_x(5);     %vy
-            obj.x_nominal(6) = obj.x_nominal(6) + obj.delta_x(6);     %vz
-            obj.x_nominal(7:10) = obj.quaternion_mult(obj.x_nominal(7:10), q_error); %q
-            obj.x_nominal(7:10) = obj.quat_normalize(obj.x_nominal(7:10));           %q
-            obj.x_nominal(11) = obj.x_nominal(11) + obj.delta_x(10);  %a_b_x
-            obj.x_nominal(12) = obj.x_nominal(12) + obj.delta_x(11);  %a_b_y
-            obj.x_nominal(13) = obj.x_nominal(13) + obj.delta_x(12);  %a_b_z
-            obj.x_nominal(14) = obj.x_nominal(14) + obj.delta_x(13);  %w_b_x
-            obj.x_nominal(15) = obj.x_nominal(15) + obj.delta_x(14);  %w_b_y
-            obj.x_nominal(16) = obj.x_nominal(16) + obj.delta_x(15);  %w_b_z
-            
-            %error state reset
-            if 1
-                G = obj.I_15x15;
-                G(7:9, 7:9) = obj.I_3x3 - (0.5 * obj.hat_map_3x3([delta_theta_x;
-                                                                  delta_theta_y;
-                                                                  delta_theta_z]));
-            else
-                G = obj.I_15x15;
-            end
-            obj.P = G * obj.P * G.';
-            
-            %update rotation matrix for position estimation
-            obj.R = obj.quat_to_rotation_matrix(obj.x_nominal(7:10));
-            
-            ret_obj = obj;
-        end
         
-        function ret_obj = mag_correct2(obj, mx, my, mz)
+        function ret_obj = mag_correct1(obj, mx, my, mz)
             %normalize magnetic field vector
             mag = [mx; my; mz];
             y_mag = mag / norm(mag);
@@ -761,6 +663,104 @@ classdef eskf_estimator
             	q_error = [1;
             	           0;
                            0;
+                           0.5 * delta_theta_z];
+            else
+                delta_theta_norm = sqrt(delta_theta_x * delta_theta_x + ...
+                                        delta_theta_y * delta_theta_y + ...
+                                        delta_theta_z * delta_theta_z);
+                q_error = [cos(delta_theta_norm / 2);
+                           delta_theta_x;
+                           delta_theta_y;
+                           delta_theta_z];
+            end
+            
+            %error state injection
+            %obj.x_nominal(1) = obj.x_nominal(1) + obj.delta_x(1);     %px
+            %obj.x_nominal(2) = obj.x_nominal(2) + obj.delta_x(2);     %py
+            %obj.x_nominal(3) = obj.x_nominal(3) + obj.delta_x(3);     %pz
+            %obj.x_nominal(4) = obj.x_nominal(4) + obj.delta_x(4);     %vx
+            %obj.x_nominal(5) = obj.x_nominal(5) + obj.delta_x(5);     %vy
+            %obj.x_nominal(6) = obj.x_nominal(6) + obj.delta_x(6);     %vz
+            obj.x_nominal(7:10) = obj.quaternion_mult(obj.x_nominal(7:10), q_error); %q
+            obj.x_nominal(7:10) = obj.quat_normalize(obj.x_nominal(7:10));           %q
+            %obj.x_nominal(11) = obj.x_nominal(11) + obj.delta_x(10);  %a_b_x
+            %obj.x_nominal(12) = obj.x_nominal(12) + obj.delta_x(11);  %a_b_y
+            %obj.x_nominal(13) = obj.x_nominal(13) + obj.delta_x(12);  %a_b_z
+            %obj.x_nominal(14) = obj.x_nominal(14) + obj.delta_x(13);  %w_b_x
+            %obj.x_nominal(15) = obj.x_nominal(15) + obj.delta_x(14);  %w_b_y
+            %obj.x_nominal(16) = obj.x_nominal(16) + obj.delta_x(15);  %w_b_z
+            
+            %error state reset
+            if 1
+                G = obj.I_15x15;
+                G(7:9, 7:9) = obj.I_3x3 - (0.5 * obj.hat_map_3x3([delta_theta_x;
+                                                                  delta_theta_y;
+                                                                  delta_theta_z]));
+            else
+                G = obj.I_15x15;
+            end
+            obj.P = G * obj.P * G.';
+            
+            %update rotation matrix for position estimation
+            obj.R = obj.quat_to_rotation_matrix(obj.x_nominal(7:10));
+            
+            ret_obj = obj;
+        end
+
+        function ret_obj = mag_correct2(obj, mx, my, mz)
+            %normalize magnetic field vector
+            mag = [mx; my; mz];
+            y_mag = mag / norm(mag);
+            
+            q0 = obj.x_nominal(7);
+            q1 = obj.x_nominal(8);
+            q2 = obj.x_nominal(9);
+            q3 = obj.x_nominal(10);
+            
+            
+            %error state observation matrix of accelerometer
+            H_x_mag = [0 0 0 0 0 0 +2*q0 +2*q1 -2*q2 -2*q3 0 0 0 0 0 0;
+                       0 0 0 0 0 0 -2*q3 +2*q2 +2*q1 -2*q0 0 0 0 0 0 0;
+                       0 0 0 0 0 0 +2*q2 +2*q3 +2*q0 +2*q1 0 0 0 0 0 0];
+
+            Q_delte_theta = 0.5 * [-q1 -q2 -q3;
+                                    q0 -q3  q2;
+                                    q3  q0 -q1;
+                                   -q2  q1  q0];
+            X_delta_x = zeros(16, 15);
+            X_delta_x(1:6, 1:6) = obj.I_6x6;
+            X_delta_x(7:10, 7:9) = Q_delte_theta;
+            X_delta_x(11:13, 10:12) = obj.I_3x3;
+            X_delta_x(14:16, 13:15) = obj.I_3x3;
+            
+            H_mag = H_x_mag * X_delta_x;
+
+            %prediction of magnetic field vector using gyroscope
+            h_mag = [q0*q0 + q1*q1 - q2*q2 - q3*q3;
+                     2*(q1*q2 - q0*q3);
+                     2*(q1*q3 + q0*q2)];
+            
+            %calculate kalman gain
+            H_mag_t = H_mag.';
+            PHt_mag = obj.P * H_mag_t;
+            K_mag = PHt_mag / (H_mag * PHt_mag + obj.V_mag);
+            %disp(K_mag);
+            
+            %calculate error state residul
+            obj.delta_x = K_mag * (y_mag - h_mag);
+            
+            %calculate a posteriori process covariance matrix
+            obj.P = (obj.I_15x15 - K_mag*H_mag) * obj.P;
+            
+            %error state injection
+            delta_theta_x = obj.delta_x(7);
+            delta_theta_y = obj.delta_x(8);
+            delta_theta_z = obj.delta_x(9);
+            
+            if 1
+            	q_error = [1;
+            	           0.5 * delta_theta_x;
+                           0.5 * delta_theta_y;
                            0.5 * delta_theta_z];
             else
                 delta_theta_norm = sqrt(delta_theta_x * delta_theta_x + ...

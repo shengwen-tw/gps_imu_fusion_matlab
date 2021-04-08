@@ -115,8 +115,8 @@ for i = 2: data_num
     gravity_z_arr(i) = gravity(3);
     
     %eskf correction from magnetometer
-    eskf = eskf.mag_correct1(mag_raw_x(i), mag_raw_y(i), mag_raw_z(i));
-    %eskf = eskf.mag_correct2(mag_raw_x(i), mag_raw_y(i), mag_raw_z(i));
+    %eskf = eskf.mag_correct1(mag_raw_x(i), mag_raw_y(i), mag_raw_z(i));
+    eskf = eskf.mag_correct2(mag_raw_x(i), mag_raw_y(i), mag_raw_z(i));
     
     %eskf correction from gps sensor
     if (abs(gps_ned_vx(i) - gps_ned_vx(i - 1)) > 1e-2 || abs(gps_ned_vy(i) - gps_ned_vy(i - 1)) > 1e-2)
