@@ -3,31 +3,33 @@ csv = csvread("../dataset/dataset1.csv");
 
 %ms
 timestamp_ms = csv(:, 1);
+%gps update time
+gps_update_time_last_ms = csv(:, 2);
 %m/s^2
-accel_lpf_x = csv(:, 2);
-accel_lpf_y = csv(:, 3);
-accel_lpf_z = csv(:, 4);
+accel_lpf_x = csv(:, 3);
+accel_lpf_y = csv(:, 4);
+accel_lpf_z = csv(:, 5);
 %rad/s
-gyro_raw_x = csv(:, 5);
-gyro_raw_y = csv(:, 6);
-gyro_raw_z = csv(:, 7);
+gyro_raw_x = csv(:, 6);
+gyro_raw_y = csv(:, 7);
+gyro_raw_z = csv(:, 8);
 %uT
-mag_raw_x = csv(:, 8);
-mag_raw_y = csv(:, 9);
-mag_raw_z = csv(:, 10);
+mag_raw_x = csv(:, 9);
+mag_raw_y = csv(:, 10);
+mag_raw_z = csv(:, 11);
 %degree
-longitude = csv(:, 11);
-latitude = csv(:, 12);
+longitude = csv(:, 12);
+latitude = csv(:, 13);
 %m
-gps_height_msl = csv(:, 13);
+gps_height_msl = csv(:, 14);
 %m/s
-gps_ned_vx = csv(:, 14);
-gps_ned_vy = csv(:, 15);
-gps_ned_vz = csv(:, 16);
+gps_ned_vx = csv(:, 15);
+gps_ned_vy = csv(:, 16);
+gps_ned_vz = csv(:, 17);
 %m
-barometer_height = csv(:, 17);
+barometer_height = csv(:, 18);
 %m/s
-barometer_vz = csv(:, 18);
+barometer_vz = csv(:, 19);
 
 timestamp_s = timestamp_ms .* 0.001;
 [data_num, dummy] = size(timestamp_ms);
@@ -95,7 +97,9 @@ accelerometer_norm_arr = zeros(1, data_num);
 gravity_norm_arr = zeros(1, data_num);
 %process covariance matrix of error-state kalman filter
 eskf_P = zeros(15, data_num);
-                        
+
+gps_elapsed_time_ms = 0;
+
 for i = 2: data_num
     dt = timestamp_s(i) - timestamp_s(i - 1);
     
@@ -118,8 +122,14 @@ for i = 2: data_num
     %eskf = eskf.mag_correct1(mag_raw_x(i), mag_raw_y(i), mag_raw_z(i));
     eskf = eskf.mag_correct2(mag_raw_x(i), mag_raw_y(i), mag_raw_z(i));
     
+    %check time stamp of the gps (ms)
+    gps_elapsed_time_ms = gps_update_time_last_ms(i) - gps_update_time_last_ms(i - 1);
+    
     %eskf correction from gps sensor
-    if (abs(gps_ned_vx(i) - gps_ned_vx(i - 1)) > 1e-2 || abs(gps_ned_vy(i) - gps_ned_vy(i - 1)) > 1e-2)
+    if (gps_elapsed_time_ms > 1e-3)
+        %show gps update frequency:
+        %gps_update_freq = 1 / (gps_elapsed_time_ms / 1000);
+        
         eskf = eskf.gps_correct(longitude(i), latitude(i), gps_ned_vx(i), gps_ned_vy(i));
     end
     
