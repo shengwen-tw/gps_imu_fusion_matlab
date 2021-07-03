@@ -135,17 +135,17 @@ for i = 2: data_num
     
     %gps, barometer raw signal and transform it into enu frame for
     %visualization
-    pos_enu = eskf.convert_gps_ellipsoid_coordinates_to_enu(longitude(i), latitude(i), barometer_height(i));
-    gps_enu_x(i) = pos_enu(1);
-    gps_enu_y(i) = pos_enu(2);
-    gps_enu_z(i) = pos_enu(3);
+    pos_enu = eskf.covert_geographic_to_ned_frame(longitude(i), latitude(i), barometer_height(i));
+    gps_enu_x(i) = pos_enu(2);
+    gps_enu_y(i) = pos_enu(1);
+    gps_enu_z(i) = -pos_enu(3);
     
     %collect rotation vectors for visualization
     if mod(i, b1_visual_sample_cnt) == 0
         R = eskf.R;
-        quiver_orig_x(j) = pos_enu(1);
-        quiver_orig_y(j) = pos_enu(2);
-        quiver_orig_z(j) = pos_enu(3);
+        quiver_orig_x(j) = pos_enu(2);
+        quiver_orig_y(j) = pos_enu(1);
+        quiver_orig_z(j) = -pos_enu(3);
         quiver_b1_u(j) = R(2, 1);
         quiver_b1_v(j) = R(1, 1);
         quiver_b1_w(j) = -R(3, 1);
