@@ -1,5 +1,5 @@
 format long g
-csv = csvread("../dataset/fengyuan_20210704.csv");
+csv = csvread("../dataset/fengyuan_20210705.csv");
 %csv = csvread("../dataset/nycu_engineer_building_fifth_20201215.csv");
 
 %ms
@@ -20,6 +20,8 @@ mag_raw_z = csv(:, 10);
 %degree
 longitude = csv(:, 11);
 latitude = csv(:, 12);
+longitude = longitude .* 1e-7;
+latitude = latitude * 1e-7;
 %m
 gps_height_msl = csv(:, 13);
 %m/s
