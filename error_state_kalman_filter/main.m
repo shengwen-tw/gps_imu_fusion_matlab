@@ -40,7 +40,10 @@ timestamp_s = timestamp_ms .* 0.001;
 dt = 0.01; %100Hz, 0.01s
 
 eskf = eskf_estimator;
-
+eskf = eskf.init([accel_lpf_x(1); accel_lpf_y(1); accel_lpf_z(1)], ...
+                 [mag_raw_x(1); mag_raw_y(1); mag_raw_z(1)], ...
+                 barometer_height(1));
+             
 %set home position
 home_longitude = longitude(1);
 home_latitude = latitude(1);
@@ -99,10 +102,8 @@ accelerometer_norm_arr = zeros(1, data_num);
 gravity_norm_arr = zeros(1, data_num);
 %process covariance matrix of error-state kalman filter
 eskf_P = zeros(15, data_num);
-                        
+
 for i = 2: data_num
-    dt = timestamp_s(i) - timestamp_s(i - 1);
-    
     %eskf state update (prediction)
     eskf = eskf.predict(accel_lpf_x(i), accel_lpf_y(i), accel_lpf_z(i), ...
                         gyro_raw_x(i), gyro_raw_y(i), gyro_raw_z(i), dt);
@@ -208,206 +209,206 @@ end
 %accelerometer
 figure('Name', 'accelerometer');
 subplot (3, 1, 1);
-plot(timestamp_s, accel_lpf_x);
+plot(timestamp_s(2: end), accel_lpf_x(2: end));
 title('accelerometer');
 xlabel('time [s]');
 ylabel('ax [m/s^2]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 subplot (3, 1, 2);
-plot(timestamp_s, accel_lpf_y);
+plot(timestamp_s(2: end), accel_lpf_y(2: end));
 xlabel('time [s]');
 ylabel('ay [m/s^2]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 subplot (3, 1, 3);
-plot(timestamp_s, accel_lpf_z);
+plot(timestamp_s(2: end), accel_lpf_z(2: end));
 xlabel('time [s]');
 ylabel('az [m/s^2]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 
 %gyroscope
 figure('Name', 'gyroscope');
 subplot (3, 1, 1);
-plot(timestamp_s, rad2deg(gyro_raw_x));
+plot(timestamp_s(2: end), rad2deg(gyro_raw_x(2: end)));
 title('gyroscope');
 xlabel('time [s]');
 ylabel('wx [rad/s]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 subplot (3, 1, 2);
-plot(timestamp_s, rad2deg(gyro_raw_y));
+plot(timestamp_s(2: end), rad2deg(gyro_raw_y(2: end)));
 xlabel('time [s]');
 ylabel('wy [rad/s]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 subplot (3, 1, 3);
-plot(timestamp_s, rad2deg(gyro_raw_z));
+plot(timestamp_s(2: end), rad2deg(gyro_raw_z(2: end)));
 xlabel('time [s]');
 ylabel('wz [rad/s]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 
 %magnatometer
 figure('Name', 'magnetometer');
 subplot (3, 1, 1);
-plot(timestamp_s, mag_raw_x);
+plot(timestamp_s(2: end), mag_raw_x(2: end));
 title('magnetometer');
 xlabel('time [s]');
 ylabel('mx [uT]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 subplot (3, 1, 2);
-plot(timestamp_s, mag_raw_z);
+plot(timestamp_s(2: end), mag_raw_z(2: end));
 xlabel('time [s]');
 ylabel('my [uT]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 subplot (3, 1, 3);
-plot(timestamp_s, mag_raw_z);
+plot(timestamp_s(2: end), mag_raw_z(2: end));
 xlabel('time [s]');
 ylabel('mx [uT]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 
 %gps position
 figure('Name', 'gps position (wgs84)');
 subplot (3, 1, 1);
-plot(timestamp_s, longitude);
+plot(timestamp_s(2: end), longitude(2: end));
 title('gps position (wgs84)');
 xlabel('time [s]');
 ylabel('longitude [deg]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 subplot (3, 1, 2);
-plot(timestamp_s, latitude);
+plot(timestamp_s(2: end), latitude(2: end));
 xlabel('time [s]');
 ylabel('latitude [deg]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 subplot (3, 1, 3);
-plot(timestamp_s, gps_height_msl);
+plot(timestamp_s(2: end), gps_height_msl(2: end));
 xlabel('time [s]');
 ylabel('height MSL [m]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 
 %gps velocity
 figure('Name', 'gps velocity');
 subplot (3, 1, 1);
-plot(timestamp_s, gps_ned_vx);
+plot(timestamp_s(2: end), gps_ned_vx(2: end));
 title('gps velocity');
 xlabel('time [s]');
 ylabel('vx [m/s]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 subplot (3, 1, 2);
-plot(timestamp_s, gps_ned_vy);
+plot(timestamp_s(2: end), gps_ned_vy(2: end));
 xlabel('time [s]');
 ylabel('my [m/s]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 subplot (3, 1, 3);
-plot(timestamp_s, gps_ned_vz);
+plot(timestamp_s(2: end), gps_ned_vz(2: end));
 xlabel('time [s]');
 ylabel('vz [m/s]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 
 %barometer
 figure('Name', 'barometer');
 subplot (2, 1, 1);
-plot(timestamp_s, barometer_height);
+plot(timestamp_s(2: end), barometer_height(2: end));
 title('barometer');
 xlabel('time [s]');
 ylabel('z [m]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 subplot (2, 1, 2);
-plot(timestamp_s, barometer_vz);
+plot(timestamp_s(2: end), barometer_vz(2: end));
 xlabel('time [s]');
 ylabel('vz [m/s]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 
 %estimated roll, pitch and yaw angle
 figure('Name', 'Attitude (euler angles)');
 subplot (3, 1, 1);
-plot(timestamp_s, roll);
+plot(timestamp_s(2: end), roll(2: end));
 title('Attitude (Euler angles)');
 xlabel('time [s]');
 ylabel('Roll [deg]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 subplot (3, 1, 2);
-plot(timestamp_s, pitch);
+plot(timestamp_s(2: end), pitch(2: end));
 xlabel('time [s]');
 ylabel('Pitch [deg]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 subplot (3, 1, 3);
-plot(timestamp_s, yaw);
+plot(timestamp_s(2: end), yaw(2: end));
 xlabel('time [s]');
 ylabel('Yaw [deg]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 
 %position in enu frame
 figure('Name', 'position (enu frame)');
 subplot (3, 1, 1);
-plot(timestamp_s, gps_enu_x);
+plot(timestamp_s(2: end), gps_enu_x(2: end));
 title('position (enu frame)');
 xlabel('time [s]');
 ylabel('X [m]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 subplot (3, 1, 2);
-plot(timestamp_s, gps_enu_y);
+plot(timestamp_s(2: end), gps_enu_y(2: end));
 xlabel('time [s]');
 ylabel('Y [m]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 subplot (3, 1, 3);
-plot(timestamp_s, barometer_height);
+plot(timestamp_s(2: end), barometer_height(2: end));
 xlabel('time [s]');
 ylabel('Z [m]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 
 %fused velocity in enu frame
 figure('Name', 'fused velocity (enu frame)');
 grid on;
 subplot (3, 1, 1);
 hold on;
-plot(timestamp_s, gps_ned_vy);
-plot(timestamp_s, fused_enu_vx);
+plot(timestamp_s(2: end), gps_ned_vy(2: end));
+plot(timestamp_s(2: end), fused_enu_vx(2: end));
 title('GNSS/INS velocity');
 legend('GNSS raw velocity', 'ESKF velocity') ;
 xlabel('time [s]');
 ylabel('v_x [m/s]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 subplot (3, 1, 2);
 hold on;
-plot(timestamp_s, gps_ned_vx);
-plot(timestamp_s, fused_enu_vy);
+plot(timestamp_s(2: end), gps_ned_vx(2: end));
+plot(timestamp_s(2: end), fused_enu_vy(2: end));
 xlabel('time [s]');
 ylabel('v_y [m/s]');
 legend('GNSS raw velocity', 'ESKF velocity') ;
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 subplot (3, 1, 3);
 hold on;
-plot(timestamp_s, barometer_vz);
-plot(timestamp_s, fused_enu_vz);
+plot(timestamp_s(2: end), barometer_vz(2: end));
+plot(timestamp_s(2: end), fused_enu_vz(2: end));
 legend('Barometer raw velocity', 'ESKF velocity') ;
 xlabel('time [s]');
 ylabel('v_z [m/s]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 
 %accelerometer vs corrected gravity
 figure('Name', 'gravity');
 subplot (3, 1, 1);
 hold on;
-plot(timestamp_s, gravity_x_arr);
-plot(timestamp_s, -accel_lpf_x);
+plot(timestamp_s(2: end), gravity_x_arr(2: end));
+plot(timestamp_s(2: end), -accel_lpf_x(2: end));
 title('gravity');
 xlabel('time [s]');
 ylabel('ax [m/s^2]');
 legend('measured', 'corrected');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 subplot (3, 1, 2);
 hold on;
-plot(timestamp_s, gravity_y_arr);
-plot(timestamp_s, -accel_lpf_y);
+plot(timestamp_s(2: end), gravity_y_arr(2: end));
+plot(timestamp_s(2: end), -accel_lpf_y(2: end));
 xlabel('time [s]');
 ylabel('ay [m/s^2]');
 legend('measured', 'corrected');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 subplot (3, 1, 3);
 hold on;
-plot(timestamp_s, gravity_z_arr);
-plot(timestamp_s, -accel_lpf_z);
+plot(timestamp_s(2: end), gravity_z_arr(2: end));
+plot(timestamp_s(2: end), -accel_lpf_z(2: end));
 xlabel('time [s]');
 ylabel('az [m/s^2]');
 legend('measured', 'corrected');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 
 %accelerometer norm vs corrected gravity norm
 figure('Name', 'gravity norm');
@@ -418,7 +419,7 @@ title('gravity norm');
 xlabel('time [s]');
 ylabel('ax (m/s^2]');
 legend('measured', 'corrected');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 
 %process covariance matrix of extended kalman filter
 figure('Name', 'Process covariance matrix');
@@ -443,72 +444,72 @@ xlabel('time [s]');
 ylabel('P');
 legend('px', 'py', 'pz', 'vx', 'vy', 'vz', 'theta_x', 'theta_y', ...
        'theta_z', 'ab_x', 'ab_y', 'ab_z', 'wb_x', 'wb_y', 'wb_z');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 
 %accelerometer bias
 figure('Name', 'accelerometer bias (NED)');
 subplot (3, 1, 1);
-plot(timestamp_s, accel_bias_x);
+plot(timestamp_s(2: end), accel_bias_x(2: end));
 title('Accelerometer bias');
 xlabel('time [s]');
 ylabel('a_b_x [m/s^2]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 subplot (3, 1, 2);
-plot(timestamp_s, accel_bias_y);
+plot(timestamp_s(2: end), accel_bias_y(2: end));
 xlabel('time [s]');
 ylabel('a_b_y [m/s^2]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 subplot (3, 1, 3);
-plot(timestamp_s, accel_bias_z);
+plot(timestamp_s(2: end), accel_bias_z(2: end));
 xlabel('time [s]');
 ylabel('a_b_z [m/s^2]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 
 %gyroscope bias
 figure('Name', 'Gyroscope bias');
 subplot (3, 1, 1);
-plot(timestamp_s, rad2deg(gyro_bias_x));
+plot(timestamp_s(2: end), rad2deg(gyro_bias_x(2: end)));
 title('Gyroscope bias');
 xlabel('time [s]');
 ylabel('w_b_x [deg/s]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 subplot (3, 1, 2);
-plot(timestamp_s, rad2deg(gyro_bias_y));
+plot(timestamp_s(2: end), rad2deg(gyro_bias_y(2: end)));
 xlabel('time [s]');
 ylabel('w_b_y [deg/s]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 subplot (3, 1, 3);
-plot(timestamp_s, rad2deg(gyro_bias_z));
+plot(timestamp_s(2: end), rad2deg(gyro_bias_z(2: end)));
 xlabel('time [s]');
 ylabel('w_b_z [deg/s]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 
 %raw position vs fused position
 figure('Name', 'raw position and fused position (enu frame)');
 grid on;
 subplot (3, 1, 1);
 hold on;
-plot(timestamp_s, gps_enu_x);
-plot(timestamp_s, fused_enu_x);
+plot(timestamp_s(2: end), gps_enu_x(2: end));
+plot(timestamp_s(2: end), fused_enu_x(2: end));
 title('GNSS/INS position');
 legend('GNSS raw x', 'ESKF x') ;
 xlabel('time [s]');
 ylabel('X [m]');
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 subplot (3, 1, 2);
 hold on;
-plot(timestamp_s, gps_enu_y);
-plot(timestamp_s, fused_enu_y);
+plot(timestamp_s(2: end), gps_enu_y(2: end));
+plot(timestamp_s(2: end), fused_enu_y(2: end));
 xlabel('time [s]');
 ylabel('Y [m]');
 legend('GNSS raw y', 'ESKF y') ;
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 subplot (3, 1, 3);
 hold on;
-plot(timestamp_s, barometer_height);
-plot(timestamp_s, fused_enu_z);
+plot(timestamp_s(2: end), barometer_height(2: end));
+plot(timestamp_s(2: end), fused_enu_z(2: end));
 legend('Barometer raw z', 'ESKF z') ;
-xlim([0 100])
+xlim([0 timestamp_s(end)]) 
 xlabel('time [s]');
 ylabel('Z [m]');
 

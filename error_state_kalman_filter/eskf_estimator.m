@@ -251,6 +251,56 @@ classdef eskf_estimator
             enu_pos = R.' * [dx; dy; dz];
         end
         
+        %for initialization only
+        function q = convert_gravity_to_quat(obj, a)
+            if a(3) >= 0.0
+                sqrt_tmp = 1.0 / sqrt(2.0 * (a(3) + 1));
+                q(1) = sqrt(0.5 * (a(3) + 1.0));
+                q(2) = -a(2) * sqrt_tmp;
+                q(3) = +a(1) * sqrt_tmp;
+                q(4) = 0.0;
+            else
+                sqrt_tmp = 1.0 / sqrt(2.0 * (1.0 - a(3)));
+                q(1) = -a(2) * sqrt_tmp;
+                q(2) = sqrt((1.0 - a(3)) * 0.5);
+                q(3) = 0.0;
+                q(4) = a(1) * sqrt_tmp;
+            end
+        end
+        
+        %for initialization only
+        function q = convert_magnetic_field_to_quat(obj, l)
+            gamma = l(1)*l(1) + l(2)*l(2);
+            sqrt_gamma = sqrt(gamma);
+            sqrt_2gamma = sqrt(2.0 * gamma);
+            sqrt_2 = sqrt(2.0);
+
+            if l(1) >= 0.0
+                sqrt_tmp = sqrt(gamma + l(1)*sqrt_gamma);
+                q(1)= sqrt_tmp / sqrt_2gamma;
+                q(2) = 0.0;
+                q(3) = 0.0;
+                q(4) = l(2) / (sqrt_2 * sqrt_tmp);
+            else
+                sqrt_tmp = sqrt(gamma - l(1)*sqrt_gamma);
+                q(1) = l(2) / (sqrt_2 * sqrt_tmp);
+                q(2) = 0.0;
+                q(3) = 0.0;
+                q(4) = sqrt_tmp / sqrt_2gamma;
+            end
+        end
+        
+        function ret_obj = init(obj, accel, mag, pz)
+            q_accel = convert_gravity_to_quat(obj, -accel);
+            q_mag = convert_magnetic_field_to_quat(obj, mag);
+            q_init = quaternion_mult(obj, q_accel, q_mag);
+            q_init = quaternion_conj(obj, q_init);
+            q_init = quat_normalize(obj, q_init);
+            obj.x_nominal(7:10) = q_init;
+            obj.x_nominal(3) = pz;
+            ret_obj = obj;
+        end
+        
         function ret_obj = predict(obj, ax, ay, az, wx, wy, wz, dt)
             %calculate am - ab
             am_sub_ab = [ax - obj.x_nominal(11);
