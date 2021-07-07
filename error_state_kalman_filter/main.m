@@ -1,6 +1,8 @@
 format long g
+clear all
+
 csv = csvread("../dataset/fengyuan_20210705.csv");
-%csv = csvread("../dataset/nycu_engineer_building_fifth_20201215.csv");
+%csv = csvread("../dataset/nycu_engineer_building_fifth_20210707.csv");
 
 %ms
 timestamp_ms = csv(:, 1);

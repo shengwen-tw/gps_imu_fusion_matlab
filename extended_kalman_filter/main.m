@@ -1,5 +1,8 @@
 format long g
-csv = csvread("../dataset/dataset1.csv");
+clear all
+
+csv = csvread("../dataset/fengyuan_20210705.csv");
+%csv = csvread("../dataset/nycu_engineer_building_fifth_20210707.csv");
 
 %ms
 timestamp_ms = csv(:, 1);
@@ -18,6 +21,8 @@ mag_raw_z = csv(:, 10);
 %degree
 longitude = csv(:, 11);
 latitude = csv(:, 12);
+longitude = longitude * 1e-7;
+latitude = latitude * 1e-7;
 %m
 gps_height_msl = csv(:, 13);
 %m/s
@@ -38,8 +43,8 @@ dt = 0.01; %100Hz, 0.01s
 ekf = ekf_estimator;
 
 %set home position
-home_longitude = 120.9971619;
-home_latitude = 24.7861614;
+home_longitude = longitude(1);
+home_latitude = latitude(1);
 ekf = ekf.set_home_longitude_latitude(home_longitude, home_latitude, 0);
 
 %record datas
