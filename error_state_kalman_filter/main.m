@@ -152,9 +152,9 @@ for i = 2: data_num
     %collect rotation vectors for visualization
     if mod(i, b1_visual_sample_cnt) == 0
         R = eskf.R;
-        quiver_orig_x(j) = pos_enu(2);
-        quiver_orig_y(j) = pos_enu(1);
-        quiver_orig_z(j) = -pos_enu(3);
+        quiver_orig_x(j) = gps_enu_x(i);
+        quiver_orig_y(j) = gps_enu_y(i);
+        quiver_orig_z(j) = gps_enu_z(i);
         quiver_b1_u(j) = R(2, 1);
         quiver_b1_v(j) = R(1, 1);
         quiver_b1_w(j) = -R(3, 1);
@@ -521,6 +521,7 @@ ylabel('Z [m]');
 figure('Name', 'x-y position (enu frame)');
 grid on;
 hold on;
+axis equal;
 plot(gps_enu_x, gps_enu_y, ...
      'Color', 'k', ...
      'Marker', 'o', ...
