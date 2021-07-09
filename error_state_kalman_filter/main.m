@@ -1,8 +1,9 @@
 format long g
 clear all
 
-csv = csvread("../dataset/fengyuan_20210705.csv");
+%csv = csvread("../dataset/fengyuan_20210705.csv");
 %csv = csvread("../dataset/nycu_engineer_building_fifth_20210707.csv");
+csv = csvread("../dataset/nycu_running_track_20210709.csv");
 
 %ms
 timestamp_ms = csv(:, 1);
@@ -129,6 +130,7 @@ for i = 2: data_num
     if (abs(gps_ned_vx(i) - gps_ned_vx(i - 1)) > 1e-2 || abs(gps_ned_vy(i) - gps_ned_vy(i - 1)) > 1e-2)
         eskf = eskf.gps_correct(longitude(i), latitude(i), gps_ned_vx(i), gps_ned_vy(i));
     end
+
     
     %eskf correction from height sensor
     eskf = eskf.height_correct(barometer_height(i), barometer_vz(i));
