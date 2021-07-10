@@ -106,6 +106,8 @@ gravity_norm_arr = zeros(1, data_num);
 %process covariance matrix of error-state kalman filter
 eskf_P = zeros(15, data_num);
 
+eskf_P_norm = zeros(1, data_num);
+
 for i = 2: data_num
     %eskf state update (prediction)
     eskf = eskf.predict(accel_lpf_x(i), accel_lpf_y(i), accel_lpf_z(i), ...
@@ -134,6 +136,8 @@ for i = 2: data_num
     
     %eskf correction from height sensor
     eskf = eskf.height_correct(barometer_height(i), barometer_vz(i));
+    
+    eskf_P_norm(i) = trace(eskf.P);
     
     fused_enu_x(i) = eskf.x_nominal(2);
     fused_enu_y(i) = eskf.x_nominal(1);
@@ -365,26 +369,29 @@ hold on;
 plot(timestamp_s(2: end), gps_ned_vy(2: end));
 plot(timestamp_s(2: end), fused_enu_vx(2: end));
 title('GNSS/INS velocity');
-legend('GNSS raw velocity', 'ESKF velocity') ;
+legend('GNSS X Velocity', 'ESKF X Velocity') ;
 xlabel('time [s]');
 ylabel('v_x [m/s]');
 xlim([0 timestamp_s(end)]) 
+box on
 subplot (3, 1, 2);
 hold on;
 plot(timestamp_s(2: end), gps_ned_vx(2: end));
 plot(timestamp_s(2: end), fused_enu_vy(2: end));
 xlabel('time [s]');
 ylabel('v_y [m/s]');
-legend('GNSS raw velocity', 'ESKF velocity') ;
+legend('GNSS Y Velocity', 'ESKF Y Velocity') ;
 xlim([0 timestamp_s(end)]) 
+box on
 subplot (3, 1, 3);
 hold on;
 plot(timestamp_s(2: end), barometer_vz(2: end));
 plot(timestamp_s(2: end), fused_enu_vz(2: end));
-legend('Barometer raw velocity', 'ESKF velocity') ;
+legend('Rangefinder Z Velocity', 'ESKF Z Velocity') ;
 xlabel('time [s]');
 ylabel('v_z [m/s]');
 xlim([0 timestamp_s(end)]) 
+box on
 
 %accelerometer vs corrected gravity
 figure('Name', 'gravity');
@@ -450,11 +457,20 @@ legend('px', 'py', 'pz', 'vx', 'vy', 'vz', 'theta_x', 'theta_y', ...
        'theta_z', 'ab_x', 'ab_y', 'ab_z', 'wb_x', 'wb_y', 'wb_z');
 xlim([0 timestamp_s(end)]) 
 
+%norm of the eskf process covariance matrix of extended kalman filter
+figure('Name', 'Norm of the eskf process covariance matrix');
+hold on;
+plot(timestamp_s(2: data_num), eskf_P_norm(1, 2: data_num));
+title('Norm of the eskf process covariance matrix');
+xlabel('time [s]');
+ylabel('P norm');
+xlim([0 timestamp_s(end)]) 
+
 %accelerometer bias
-figure('Name', 'accelerometer bias (NED)');
+figure('Name', 'Accelerometer Bias');
 subplot (3, 1, 1);
 plot(timestamp_s(2: end), accel_bias_x(2: end));
-title('Accelerometer bias');
+title('Accelerometer Bias');
 xlabel('time [s]');
 ylabel('a_b_x [m/s^2]');
 xlim([0 timestamp_s(end)]) 
@@ -470,10 +486,10 @@ ylabel('a_b_z [m/s^2]');
 xlim([0 timestamp_s(end)]) 
 
 %gyroscope bias
-figure('Name', 'Gyroscope bias');
+figure('Name', 'Gyroscope Bias');
 subplot (3, 1, 1);
 plot(timestamp_s(2: end), rad2deg(gyro_bias_x(2: end)));
-title('Gyroscope bias');
+title('Gyroscope Bias');
 xlabel('time [s]');
 ylabel('w_b_x [deg/s]');
 xlim([0 timestamp_s(end)]) 
@@ -495,27 +511,30 @@ subplot (3, 1, 1);
 hold on;
 plot(timestamp_s(2: end), gps_enu_x(2: end));
 plot(timestamp_s(2: end), fused_enu_x(2: end));
-title('GNSS/INS position');
-legend('GNSS raw x', 'ESKF x') ;
+title('GNSS/INS Position');
+legend('GNSS X Position', 'ESKF X Position') ;
 xlabel('time [s]');
 ylabel('X [m]');
 xlim([0 timestamp_s(end)]) 
+box on
 subplot (3, 1, 2);
 hold on;
 plot(timestamp_s(2: end), gps_enu_y(2: end));
 plot(timestamp_s(2: end), fused_enu_y(2: end));
 xlabel('time [s]');
 ylabel('Y [m]');
-legend('GNSS raw y', 'ESKF y') ;
+legend('GNSS Y Position', 'ESKF Y Position') ;
 xlim([0 timestamp_s(end)]) 
+box on
 subplot (3, 1, 3);
 hold on;
 plot(timestamp_s(2: end), barometer_height(2: end));
 plot(timestamp_s(2: end), fused_enu_z(2: end));
-legend('Barometer raw z', 'ESKF z') ;
+legend('Rangefinder Z Position', 'ESKF Z Position') ;
 xlim([0 timestamp_s(end)]) 
 xlabel('time [s]');
 ylabel('Z [m]');
+box on
 
 %2d position trajectory plot of x-y plane
 figure('Name', 'x-y position (enu frame)');
@@ -528,10 +547,11 @@ plot(gps_enu_x, gps_enu_y, ...
      'LineStyle', 'None', ...
      'MarkerSize', 3);
 plot(fused_enu_x, fused_enu_y, 'Color', 'r');
-legend('GNSS measurement', 'ESKF trajectory') ;
-title('GNSS/INS position');
-xlabel('X [m]');
-ylabel('Y [m]');
+legend('GNSS Position', 'ESKF Position') ;
+title('GNSS/INS Position');
+xlabel('Y [m]');
+ylabel('X [m]');
+box on
 
 hold on;
 %3d visualization of position trajectory
