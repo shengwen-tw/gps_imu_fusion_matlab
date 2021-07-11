@@ -82,10 +82,10 @@ classdef eskf_estimator
              0 0 0 0 0 0 0 0 5 0 0 0 0 0 0;     %delta_z
              0 0 0 0 0 0 0 0 0 1 0 0 0 0 0;     %delta a_b_x
              0 0 0 0 0 0 0 0 0 0 1 0 0 0 0;     %delta a_b_y
-             0 0 0 0 0 0 0 0 0 0 0 1e-2 0 0 0;  %delta a_b_z
+             0 0 0 0 0 0 0 0 0 0 0 1 0 0 0;  %delta a_b_z
              0 0 0 0 0 0 0 0 0 0 0 0 1e-1 0 0;  %delta w_b_x
              0 0 0 0 0 0 0 0 0 0 0 0 0 1e-1 0;  %delta w_b_y
-             0 0 0 0 0 0 0 0 0 0 0 0 0 0 1e-1]; %delta w_b_z
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 5e-1]; %delta w_b_z
         
         %observation covariance matrix of accelerometer
         V_accel = [7e-1 0 0;  %ax
@@ -98,13 +98,14 @@ classdef eskf_estimator
                  0 0 5e-1]; %mz
              
         %observation covariance matrix of the gps sensor
-        V_gps = [1e-5 0 0 0;  %px
-                 0 1e-5 0 0;  %py
-                 0 0 1e-2 0;  %vx
-                 0 0 0 1e-2]; %vy
-             
-        %%observation covariance matrix of the height sensor
-        V_height = [1e-1 0;  %pz
+        V_gps = [1e-3 0 0 0;  %px
+                 0 1e-3 0 0;  %py
+                 0 0 1e-1 0;  %vx
+                 0 0 0 1e-1]; %vy
+        
+        %rangefinder
+        %observation covariance matrix of the height sensor
+        V_height = [1e-3 0;  %pz
                     0 1e-1]; %vz   
                 
         I_3x3 = eye(3);

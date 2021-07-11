@@ -156,9 +156,9 @@ for i = 2: data_num
     %collect rotation vectors for visualization
     if mod(i, b1_visual_sample_cnt) == 0
         R = eskf.R;
-        quiver_orig_x(j) = gps_enu_x(i);
-        quiver_orig_y(j) = gps_enu_y(i);
-        quiver_orig_z(j) = gps_enu_z(i);
+        quiver_orig_x(j) = fused_enu_x(i);
+        quiver_orig_y(j) = fused_enu_y(i);
+        quiver_orig_z(j) = fused_enu_z(i);
         quiver_b1_u(j) = R(2, 1);
         quiver_b1_v(j) = R(1, 1);
         quiver_b1_w(j) = -R(3, 1);
@@ -546,7 +546,7 @@ plot(gps_enu_x, gps_enu_y, ...
      'Marker', 'o', ...
      'LineStyle', 'None', ...
      'MarkerSize', 3);
-if 0
+if 1
     plot(fused_enu_x, fused_enu_y, 'Color', 'r', ...
         'Marker', 'o', ...
         'LineStyle', 'None', ...
