@@ -369,7 +369,7 @@ hold on;
 plot(timestamp_s(2: end), gps_ned_vy(2: end));
 plot(timestamp_s(2: end), fused_enu_vx(2: end));
 title('GNSS/INS velocity');
-legend('GNSS X Velocity', 'ESKF X Velocity') ;
+legend('GNSS X Velocity', 'ESKF X Velocity', 'Location', 'best') ;
 xlabel('time [s]');
 ylabel('v_x [m/s]');
 xlim([0 timestamp_s(end)]) 
@@ -380,14 +380,14 @@ plot(timestamp_s(2: end), gps_ned_vx(2: end));
 plot(timestamp_s(2: end), fused_enu_vy(2: end));
 xlabel('time [s]');
 ylabel('v_y [m/s]');
-legend('GNSS Y Velocity', 'ESKF Y Velocity') ;
+legend('GNSS Y Velocity', 'ESKF Y Velocity', 'Location', 'best') ;
 xlim([0 timestamp_s(end)]) 
 box on
 subplot (3, 1, 3);
 hold on;
 plot(timestamp_s(2: end), barometer_vz(2: end));
 plot(timestamp_s(2: end), fused_enu_vz(2: end));
-legend('Rangefinder Z Velocity', 'ESKF Z Velocity') ;
+legend('Rangefinder Z Velocity', 'ESKF Z Velocity', 'Location', 'best') ;
 xlabel('time [s]');
 ylabel('v_z [m/s]');
 xlim([0 timestamp_s(end)]) 
@@ -512,7 +512,7 @@ hold on;
 plot(timestamp_s(2: end), gps_enu_x(2: end));
 plot(timestamp_s(2: end), fused_enu_x(2: end));
 title('GNSS/INS Position');
-legend('GNSS X Position', 'ESKF X Position') ;
+legend('GNSS X Position', 'ESKF X Position', 'Location', 'best') ;
 xlabel('time [s]');
 ylabel('X [m]');
 xlim([0 timestamp_s(end)]) 
@@ -523,14 +523,14 @@ plot(timestamp_s(2: end), gps_enu_y(2: end));
 plot(timestamp_s(2: end), fused_enu_y(2: end));
 xlabel('time [s]');
 ylabel('Y [m]');
-legend('GNSS Y Position', 'ESKF Y Position') ;
+legend('GNSS Y Position', 'ESKF Y Position', 'Location', 'best') ;
 xlim([0 timestamp_s(end)]) 
 box on
 subplot (3, 1, 3);
 hold on;
 plot(timestamp_s(2: end), barometer_height(2: end));
 plot(timestamp_s(2: end), fused_enu_z(2: end));
-legend('Rangefinder Z Position', 'ESKF Z Position') ;
+legend('Rangefinder Z Position', 'ESKF Z Position', 'Location', 'best') ;
 xlim([0 timestamp_s(end)]) 
 xlabel('time [s]');
 ylabel('Z [m]');

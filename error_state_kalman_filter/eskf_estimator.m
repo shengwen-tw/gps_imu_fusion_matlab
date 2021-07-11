@@ -10,10 +10,10 @@ classdef eskf_estimator
         home_ecef_y = 0;
         home_ecef_z = 0;
         
-        EQUATORIAL_RADIUS = 6378137 %[m], earth semi-major length (AE)
-        POLAR_RADIUS = 6356752      %[m], earth semi-minor length (AP)
-        AP_SQ_DIV_AE_SQ = 0.99331   %(AP^2)/(AE^2)
-        ECCENTRICITY = 0.081820     %e^2 = 1 - (AP^2)/(AE^2)
+        EQUATORIAL_RADIUS = 6378137     %[m], earth semi-major length (AE)
+        POLAR_RADIUS = 6356752          %[m], earth semi-minor length (AP)
+        AP_SQ_DIV_AE_SQ = 0.9933055218  %(AP^2)/(AE^2)
+        ECCENTRICITY = 0.00669447819    %e^2 = 1 - (AP^2)/(AE^2)
         
         gravity = [0; 0; 9.8];
         
